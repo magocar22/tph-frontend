@@ -1,16 +1,84 @@
 ---
-
+// src/pages/index.astro
+import Concepto from '../components/Concepto.astro';
+import Inversion from '../components/Inversion.astro';
+import Impacto from '../components/Impacto.astro';
 ---
 
-<html lang="en">
+<html lang="es">
 	<head>
 		<meta charset="utf-8" />
 		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
 		<meta name="viewport" content="width=device-width" />
 		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
+		<title>Tu Primer Hogar - Alquiler con opción a compra</title>
 	</head>
 	<body>
-		<h1>Astro</h1>
+		
+		<!-- SECCIÓN HERO (PORTADA) -->
+		<!-- 
+			relative: Para poder poner la capa oscura encima de la foto.
+			h-screen: Que ocupe el 100% de la altura de la pantalla (móvil o PC).
+			bg-cover y bg-center: La imagen se adapta sin deformarse.
+		-->
+		<section class="relative h-screen min-h-[600px] flex items-center justify-center bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=2073&auto=format&fit=crop');">
+			
+			<!-- CAPA OSCURA (OVERLAY) -->
+			<!-- Esto oscurece la foto un 50% (bg-black/50) para que el texto blanco se lea perfecto -->
+			<div class="absolute inset-0 bg-black/60"></div>
+
+			<!-- CONTENIDO DEL TEXTO -->
+			<!-- 
+				z-10: Para que esté por encima de la capa oscura.
+				px-4: Margen lateral para que el texto NO toque los bordes en móvil (SOLUCIÓN ERROR 1).
+			-->
+			<div class="relative z-10 text-center text-white px-4 max-w-4xl mx-auto">
+				
+				<!-- TITULAR -->
+				<!-- 
+					text-4xl: Tamaño grande en móvil.
+					md:text-7xl: Tamaño gigante en pantallas medianas (PC).
+					font-bold: Negrita.
+					leading-tight: Interlineado ajustado para que no se separe mucho.
+				-->
+				<h1 class="text-4xl md:text-7xl font-bold mb-6 leading-tight uppercase">
+					Tu hogar sin <br/>
+					<span class="text-blue-400">pagar entrada</span>
+				</h1>
+
+				<!-- SUBTÍTULO -->
+				<p class="text-lg md:text-2xl mb-10 text-gray-200 max-w-2xl mx-auto">
+					La plataforma que convierte tu alquiler mensual en la compra de tu futura vivienda. Sin letra pequeña.
+				</p>
+
+				<!-- BOTONES DE ACCIÓN (CTA) -->
+				<!-- 
+					flex-col: En móvil, los botones van uno debajo de otro (SOLUCIÓN ERROR BOTONES PEQUEÑOS).
+					md:flex-row: En PC, se ponen uno al lado del otro.
+				-->
+				<div class="flex flex-col md:flex-row gap-4 justify-center items-center w-full">
+					
+					<!-- BOTÓN PRINCIPAL -->
+					<a href="#" class="w-full md:w-auto bg-blue-600 hover:bg-blue-700 text-white font-bold py-4 px-8 rounded-lg text-lg transition-colors">
+						Empezar ahora
+					</a>
+
+					<!-- BOTÓN SECUNDARIO (Whatsapp/Teléfono) -->
+					<a href="#" class="w-full md:w-auto bg-white hover:bg-gray-100 text-blue-900 font-bold py-4 px-8 rounded-lg text-lg transition-colors border-2 border-white">
+						Más información
+					</a>
+				</div>
+
+			</div>
+		</section>
+
+		<!-- AQUI VAN LAS DISTINTAS SECCIONES -->
+        <Concepto />  
+
+		<Inversion />  
+		
+		<Impacto />
+		
+
 	</body>
 </html>

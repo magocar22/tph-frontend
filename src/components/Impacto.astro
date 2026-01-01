@@ -1,0 +1,65 @@
+---
+// src/components/Impacto.astro
+---
+
+<section class="py-20 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- TÍTULO DE LA SECCIÓN -->
+    <div class="text-center mb-16">
+      <h2 class="text-3xl md:text-4xl font-bold text-blue-600">
+        Un modelo de alquiler e inversión con impacto social
+      </h2>
+    </div>
+
+    <!-- CONTENEDOR GRID -->
+    <!-- 
+      En móvil: 1 columna (se apilan).
+      En PC (lg): 3 columnas.
+      items-center: Para que todo esté alineado verticalmente al centro.
+    -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-10 items-center">
+      
+      <!-- TARJETA IZQUIERDA -->
+      <div class="bg-white border-2 border-blue-500 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+        <h3 class="text-xl font-bold text-blue-600 mb-4">
+          Tu alquiler se convierte en visión a largo plazo
+        </h3>
+        <p class="text-gray-600 leading-relaxed">
+          El precio está fijado desde el primer día garantizando el valor a corto y largo plazo.
+        </p>
+      </div>
+
+      <!-- IMAGEN CENTRAL -->
+      <!-- 
+        En móvil: Le damos un tamaño máximo para que no sea enorme.
+        En PC: Ocupa su espacio natural.
+        NOTA: He usado una imagen de casa con fondo blanco/transparente para simular tu captura.
+      -->
+      <div class="flex justify-center order-last lg:order-none py-6 lg:py-0">
+        <img 
+          src="https://images.unsplash.com/photo-1568605114967-8130f3a36994?q=80&w=1000&auto=format&fit=crop" 
+          alt="Casa modelo" 
+          class="w-full max-w-xs lg:max-w-full h-auto object-contain rounded-xl lg:scale-125 z-10"
+        />
+        <!-- 
+           TRUCO DE DISEÑO: "lg:scale-125" hace que la casa sea un poco más grande 
+           que las columnas de texto en PC, creando ese efecto de "sobresalir" 
+           que se ve bien en webs inmobiliarias.
+        -->
+      </div>
+
+      <!-- TARJETA DERECHA -->
+      <div class="bg-white border-2 border-blue-500 rounded-2xl p-8 shadow-lg hover:shadow-xl transition-shadow">
+        <h3 class="text-xl font-bold text-blue-600 mb-4">
+          Inversión con propósito y retorno medible
+        </h3>
+        <p class="text-gray-600 leading-relaxed">
+          La propiedad se disfruta desde el primer día aportando seguridad en los planes personales o familiares del inquilino, futuro propietario.
+        </p>
+      </div>
+
+    </div>
+
+  </div>
+</section>

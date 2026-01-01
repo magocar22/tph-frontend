@@ -1,0 +1,63 @@
+---
+// src/components/Concepto.astro
+
+// Aquí definimos los datos de las tarjetas (Array de objetos)
+// Así es mucho más fácil editar los textos en el futuro sin tocar el HTML.
+const tarjetas = [
+  {
+    titulo: "Modelo General",
+    texto: "Tu Primer Hogar es un programa de arrendamiento con derecho de compra, diseñado para ofrecer una salida planificada a la propiedad sin barreras financieras iniciales."
+  },
+  {
+    titulo: "Público Objetivo",
+    texto: "Jóvenes con ingresos estables pero sin capacidad de ahorro para entrada. Se prioriza la estabilidad laboral y la voluntad de permanencia."
+  },
+  {
+    titulo: "Cómo Funciona",
+    texto: "El precio de venta se fija desde el inicio y parte del alquiler pagado genera un descuento futuro. Se suma fidelización, estabilidad y planificación."
+  },
+  {
+    titulo: "Valor Añadido",
+    texto: "Una solución rentable para el usuario y segura para el inversor. Promueve sostenibilidad, comunidad y compromiso sin hipotecar el futuro."
+  }
+];
+---
+
+<section class="py-16 bg-white">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- CABECERA DE LA SECCIÓN -->
+    <div class="text-center mb-12">
+      <h2 class="text-3xl md:text-4xl font-bold text-blue-600 mb-4">
+        El Concepto
+      </h2>
+      <p class="text-gray-600 text-lg max-w-2xl mx-auto">
+        Un nuevo modelo de acceso a la vivienda para jóvenes con visión de futuro.
+      </p>
+    </div>
+
+    <!-- REJILLA (GRID) DE TARJETAS -->
+    <!-- 
+      grid-cols-1: 1 columna en móvil.
+      md:grid-cols-2: 2 columnas en tablet.
+      lg:grid-cols-4: 4 columnas en PC.
+      gap-6: Espacio entre tarjetas.
+    -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      
+      <!-- LÓGICA DE ASTRO: "Mapear" los datos -->
+      {tarjetas.map((item) => (
+        <div class="border-2 border-blue-500 rounded-2xl p-6 hover:shadow-lg transition-shadow h-full flex flex-col bg-white">
+          <h3 class="text-xl font-bold text-blue-600 mb-3">
+            {item.titulo}
+          </h3>
+          <p class="text-gray-700 leading-relaxed text-sm md:text-base">
+            {item.texto}
+          </p>
+        </div>
+      ))}
+
+    </div>
+
+  </div>
+</section>
