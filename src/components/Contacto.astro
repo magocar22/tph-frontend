@@ -1,11 +1,13 @@
 ---
 // src/components/Contacto.astro
-// No necesitamos scripts por ahora, solo estructura visual.
+// IMPORTANTE: Pon aquí la clave que te llegó al email desde Web3Forms
+const ACCESS_KEY = "TU-ACCESS-KEY-AQUI"; 
 ---
 
 <section class="py-16 md:py-24 bg-blue-50" id="contacto">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     
+    <!-- GRID DE 2 COLUMNAS (Esto es lo que se había borrado) -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
       
       <!-- ============================================ -->
@@ -34,8 +36,8 @@
             </div>
             <div class="ml-4">
               <h3 class="text-lg font-medium text-gray-900">Teléfono</h3>
-              <p class="mt-1 text-gray-600">+34 952 777 500</p>
-              <p class="text-sm text-gray-500">Lunes a Viernes de 9:00 a 14:00</p>
+              <p class="mt-1 text-gray-600">+34 952 000 000</p>
+              <p class="text-sm text-gray-500">Lunes a Viernes de 9:00 a 18:00</p>
             </div>
           </div>
 
@@ -49,7 +51,7 @@
             <div class="ml-4">
               <h3 class="text-lg font-medium text-gray-900">Email</h3>
               <p class="mt-1 text-gray-600">info@tuprimerhogar.es</p>
-              <p class="text-sm text-gray-500">Respondemos en menos de 24h laborables</p>
+              <p class="text-sm text-gray-500">Respondemos en menos de 24h</p>
             </div>
           </div>
 
@@ -57,90 +59,120 @@
       </div>
 
       <!-- ============================================ -->
-      <!-- COLUMNA DERECHA: EL FORMULARIO -->
+      <!-- COLUMNA DERECHA: EL FORMULARIO FUNCIONAL -->
       <!-- ============================================ -->
       <div class="bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-gray-100">
         
-        <!-- form sin action por ahora -->
-        <form class="space-y-6">
+        <form action="https://api.web3forms.com/submit" method="POST" id="form-contacto" class="space-y-6">
           
-          <!-- Nombre -->
+          <!-- 1. CAMPOS DE CONFIGURACIÓN DE WEB3FORMS -->
+          <input type="hidden" name="access_key" value={ACCESS_KEY}>
+          <input type="hidden" name="subject" value="Nuevo Lead desde Tu Primer Hogar">
+          <input type="hidden" name="from_name" value="Web Tu Primer Hogar">
+          
+          <!-- Honeypot (Trampa antispam oculta) -->
+          <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
+      
+          <!-- 2. CAMPOS DEL FORMULARIO -->
           <div>
             <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre completo</label>
-            <input 
-              type="text" 
-              id="nombre" 
-              name="nombre" 
-              placeholder="Ej: Juan Pérez"
-              class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-            />
+            <input type="text" id="nombre" name="nombre" required placeholder="Ej: Juan Pérez" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200" />
           </div>
-
-          <!-- Email y Teléfono (En Grid para ahorrar espacio vertical) -->
+      
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
               <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Correo electrónico</label>
-              <input 
-                type="email" 
-                id="email" 
-                name="email" 
-                placeholder="tu@email.com"
-                class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-              />
+              <input type="email" id="email" name="email" required placeholder="tu@email.com" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200" />
             </div>
             <div>
               <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
-              <input 
-                type="tel" 
-                id="telefono" 
-                name="telefono" 
-                placeholder="600 00 00 00"
-                class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200"
-              />
+              <input type="tel" id="telefono" name="telefono" required placeholder="600 00 00 00" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200" />
             </div>
           </div>
-
-          <!-- Mensaje -->
+      
           <div>
             <label for="mensaje" class="block text-sm font-medium text-gray-700 mb-2">¿Cómo podemos ayudarte?</label>
-            <textarea 
-              id="mensaje" 
-              name="mensaje" 
-              rows="4" 
-              placeholder="Me gustaría saber más sobre..."
-              class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200 resize-none"
-            ></textarea>
+            <textarea id="mensaje" name="mensaje" rows="4" required placeholder="Me gustaría saber más sobre..." class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200 resize-none"></textarea>
           </div>
-
-          <!-- Checkbox Legal (CRÍTICO EN ESPAÑA) -->
+      
+          <!-- Checkbox Legal -->
           <div class="flex items-start">
             <div class="flex items-center h-5">
-              <input 
-                id="privacidad" 
-                name="privacidad" 
-                type="checkbox" 
-                class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-              />
+              <input id="privacidad" name="privacidad" type="checkbox" required class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
             </div>
             <div class="ml-3 text-sm">
               <label for="privacidad" class="text-gray-500">
-                He leído y acepto la <a href="#" class="text-blue-600 hover:underline">Política de Privacidad</a>.
+                He leído y acepto la <a href="/politica-privacidad" target="_blank" class="text-blue-600 hover:underline">Política de Privacidad</a>.
               </label>
             </div>
           </div>
-
+      
           <!-- Botón de Envío -->
-          <button 
-            type="submit" 
-            class="w-full bg-blue-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-blue-700 transform transition-all duration-200 hover:-translate-y-1 shadow-lg hover:shadow-blue-500/30"
-          >
+          <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-blue-700 transform transition-all duration-200 hover:-translate-y-1 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
             Enviar consulta gratis
           </button>
-
+      
+          <!-- MENSAJE DE RESULTADO -->
+          <div id="result" class="hidden text-center p-4 rounded-lg mt-4"></div>
+      
         </form>
-
       </div>
 
     </div>
   </div>
 </section>
+
+<!-- 3. SCRIPT PARA QUE FUNCIONE SIN RECARGAR -->
+<script is:inline>
+  const form = document.getElementById('form-contacto');
+  const result = document.getElementById('result');
+  const btn = document.getElementById('btn-submit');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    const formData = new FormData(form);
+    const object = Object.fromEntries(formData);
+    const json = JSON.stringify(object);
+
+    btn.innerHTML = "Enviando...";
+    btn.disabled = true;
+    result.classList.add('hidden');
+
+    fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json'
+        },
+        body: json
+    })
+    .then(async (response) => {
+        let json = await response.json();
+        if (response.status == 200) {
+            result.classList.remove('hidden');
+            result.classList.add('bg-green-100', 'text-green-700');
+            result.innerHTML = "¡Gracias! Hemos recibido tu mensaje. Te contactaremos pronto.";
+            form.reset();
+        } else {
+            console.log(response);
+            result.classList.remove('hidden');
+            result.classList.add('bg-red-100', 'text-red-700');
+            result.innerHTML = json.message || "Algo salió mal.";
+        }
+    })
+    .catch(error => {
+        console.log(error);
+        result.classList.remove('hidden');
+        result.classList.add('bg-red-100', 'text-red-700');
+        result.innerHTML = "Error de conexión.";
+    })
+    .finally(() => {
+        btn.innerHTML = "Enviar consulta gratis";
+        btn.disabled = false;
+        setTimeout(() => {
+            result.classList.add('hidden');
+            result.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
+        }, 5000);
+    });
+  });
+</script>

@@ -1,58 +1,60 @@
 ---
 // src/layouts/LegalLayout.astro
-import { Image } from 'astro:assets';
-import Footer from '../components/Footer.astro';
-import logoBlanco from '../assets/tph-logo-blanco.png';
+import { Image } from "astro:assets";
+import Footer from "../components/Footer.astro";
+import logoBlanco from "../assets/tph-logo-blanco.png";
 
 // Recibimos el título de la página como variable (prop)
 const { title } = Astro.props;
 ---
 
 <html lang="es">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>{title} | Tu Primer Hogar</title>
-        <!-- Evitamos que Google indexe estas páginas por si el contenido es duplicado -->
-        <meta name="robots" content="noindex, follow" />
-	</head>
-	<body class="bg-gray-50 text-gray-800">
-		
-        <!-- CABECERA LEGAL (Más sobria, fondo azul corporativo sólido o imagen oscura) -->
-        <header class="bg-blue-600 text-white py-8 md:py-12 relative overflow-hidden">
-             <!-- Decoración de fondo sutil (opcional) -->
-             <div class="absolute inset-0 bg-blue-800 opacity-50 pattern-grid-lg"></div>
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width" />
+    <meta name="generator" content={Astro.generator} />
+    <title>{title} | Tu Primer Hogar</title>
+    <!-- Evitamos que Google indexe estas páginas por si el contenido es duplicado -->
+    <meta name="robots" content="noindex, follow" />
+  </head>
+  <body class="bg-gray-50 text-gray-800">
+    <!-- CABECERA LEGAL -->
+    <header
+      class="bg-blue-600 text-white py-8 md:py-12 relative overflow-hidden"
+    >
+      <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
+        <a
+          href="/"
+          class="inline-block hover:opacity-90 transition-opacity mb-6"
+        >
+          <Image
+            src={logoBlanco}
+            alt="Volver al inicio"
+            width={180}
+            class="h-auto w-36 md:w-44"
+          />
+        </a>
+        <h1 class="text-3xl md:text-4xl font-bold uppercase tracking-wide">
+          {title}
+        </h1>
+      </div>
+    </header>
 
-            <div class="relative z-10 max-w-4xl mx-auto px-4 text-center">
-                <a href="/" class="inline-block hover:opacity-90 transition-opacity mb-6">
-                    <Image 
-                        src={logoBlanco} 
-                        alt="Volver al inicio" 
-                        width={180} 
-                        class="h-auto w-36 md:w-44"
-                    />
-                </a>
-                <h1 class="text-3xl md:text-4xl font-bold uppercase tracking-wide">
-                    {title}
-                </h1>
-            </div>
-        </header>
-
-        <!-- CONTENIDO DEL TEXTO LEGAL -->
-        <main class="max-w-4xl mx-auto px-4 py-12 md:py-20 min-h-[50vh]">
-            <!-- 
+    <!-- CONTENIDO DEL TEXTO LEGAL -->
+    <main class="max-w-4xl mx-auto px-4 py-12 md:py-20 min-h-[50vh]">
+      <!-- 
                 Aquí usamos clases de tipografía para que el texto legal 
                 (que suele ser un bloque largo) se lea bien automáticamente.
             -->
-            <article class="prose prose-blue prose-lg max-w-none bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100">
-                <!-- <slot /> es donde Astro inyectará el texto de cada página -->
-                <slot />
-            </article>
-        </main>
+      <article
+        class="prose prose-blue prose-lg max-w-none bg-white p-8 md:p-12 rounded-2xl shadow-sm border border-gray-100"
+      >
+        <!-- <slot /> es donde Astro inyectará el texto de cada página -->
+        <slot />
+      </article>
+    </main>
 
-        <Footer />
-
-	</body>
+    <Footer />
+  </body>
 </html>

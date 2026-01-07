@@ -5,7 +5,6 @@
 import { Image } from 'astro:assets';
 
 // 2. Importamos las imágenes reales desde la carpeta assets
-// (Asegúrate de que los nombres de archivo coincidan exactamente)
 import imgModelo from '../assets/modelo-optimizado.jpg';
 import imgDemanda from '../assets/demanda-real.jpg';
 import imgPlusvalia from '../assets/plusvalia.jpg';
@@ -15,7 +14,6 @@ const tarjetas = [
     titulo: "Modelo optimizado",
     desc1: "Rentabilidad desde el alquiler, salida planificada mediante opción de compra. Equilibrio entre liquidez, riesgo y estabilidad.",
     desc2: "Ideal para inversores que buscan ingresos recurrentes desde el inicio sin renunciar a una plusvalía protegida y escalabilidad.",
-    // 3. CAMBIO: Asignamos la VARIABLE importada, no un texto entre comillas
     imagen: imgModelo, 
     destacado: false
   },
@@ -59,17 +57,12 @@ const tarjetas = [
           
           <!-- IMAGEN SUPERIOR -->
           <div class="h-56 overflow-hidden relative">
-            <!-- 
-                4. CAMBIO: Usamos el componente <Image />
-                - format="webp": Fuerza el formato moderno (opcional, Astro suele hacerlo auto).
-                - width={600}: Ayuda a Astro a generar el tamaño correcto (no cargará una foto 4K).
-                - class: Mantenemos tus clases de estilo.
-            -->
+
             <Image 
               src={item.imagen} 
               alt={item.titulo} 
               width={600} 
-              class="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
+              class="w-full h-full object-cover transition-transform duration-500"
             />
           </div>
 
