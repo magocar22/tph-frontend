@@ -11,6 +11,7 @@ const links = [
   { name: 'Inicio', url: '/' },
   { name: 'El Modelo', url: '/modelo' },
   { name: 'Proyectos', url: '/proyectos' },
+  { name: 'Actualidad', url: '/blog' },
 ];
 ---
 
@@ -27,9 +28,19 @@ const links = [
     <div class="flex justify-between items-center">
       
       <!-- LOGO -->
-      <!-- z-50 para que siempre esté encima del menú azul -->
       <a href="/" class="flex items-center relative z-50" aria-label="Volver al inicio">
-        <div id="logo-container" class="transition-all duration-300">
+        <!-- 
+           CORRECCIÓN AQUÍ:
+           Añadimos la clase 'logo-blue' directamente si la página NO es transparente (!isTransparent).
+           Así, en el blog, el logo nacerá siendo azul.
+        -->
+        <div 
+            id="logo-container" 
+            class:list={[
+                "transition-all duration-300",
+                !isTransparent ? "logo-blue" : "" 
+            ]}
+        >
              <div 
                 id="logo-mask"
                 class="w-48 md:w-64 h-14 md:h-20"
@@ -38,7 +49,7 @@ const links = [
         </div>
       </a>
 
-      <!-- MENÚ ESCRITORIO (md:flex) -->
+      <!-- MENÚ ESCRITORIO -->
       <div class="hidden md:flex items-center space-x-8">
         {links.map(link => (
           <a 
@@ -73,15 +84,12 @@ const links = [
         </a>
       </div>
 
-      <!-- BOTÓN HAMBURGUESA (Visible solo en móvil) -->
-      <!-- z-50 para que se vea sobre el fondo azul -->
+      <!-- BOTÓN HAMBURGUESA MÓVIL -->
       <div class="md:hidden flex items-center relative z-50">
         <button id="mobile-menu-btn" class:list={["focus:outline-none transition-colors p-2", isTransparent ? "text-white" : "text-gray-800"]}>
-          <!-- Icono Hamburguesa -->
           <svg id="icon-menu" class="w-8 h-8 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
           </svg>
-          <!-- Icono X (Cerrar) -->
           <svg id="icon-close" class="hidden w-8 h-8 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
           </svg>
@@ -91,36 +99,21 @@ const links = [
     </div>
   </div>
 
-  <!-- 
-    MENÚ MÓVIL (PANTALLA COMPLETA AZUL)
-    - bg-blue-600: Fondo azul sólido corporativo.
-    - text-white: Todo el texto blanco.
-  -->
+  <!-- MENÚ MÓVIL -->
   <div id="mobile-menu" class="hidden md:hidden fixed inset-0 bg-blue-600 z-40 transition-opacity duration-300 opacity-0 pointer-events-none">
-    
-    <!-- Contenido centrado -->
     <div class="flex flex-col items-center justify-center h-full space-y-8 p-6">
-      
       {links.map(link => (
         <a href={link.url} class="text-white font-bold text-3xl hover:text-blue-200 transition-colors">
           {link.name}
         </a>
       ))}
-      
-      <!-- Línea separadora sutil -->
       <hr class="w-16 border-blue-400 opacity-50" />
-      
-      <!-- Botón Inversores (Ahora se ve perfecto en blanco) -->
       <a href="/inversores" class="text-blue-100 font-medium text-lg flex items-center hover:text-white transition-colors">
-        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
         Área Inversores
       </a>
-      
-      <!-- Botón Contactar (Invertido: Fondo blanco, texto azul) -->
       <a href="/contacto" class="w-full max-w-xs bg-white text-blue-600 text-center font-bold text-lg py-4 rounded-2xl hover:bg-blue-50 shadow-xl transform active:scale-95 transition-all">
         Contactar ahora
       </a>
-
     </div>
   </div>
 
@@ -139,6 +132,8 @@ const links = [
     -webkit-mask-position: center;
     transition: background-color 0.3s ease;
   }
+  
+  /* Cuando tiene esta clase, el fondo de la máscara se vuelve AZUL */
   .logo-blue #logo-mask {
     background-color: #2563EB !important;
   }
@@ -160,11 +155,11 @@ const links = [
   const iconClose = document.getElementById('icon-close');
   const menuMobile = document.getElementById('mobile-menu');
 
-  // Lógica de Scroll (Igual que antes)
+  // SCROLL
   window.addEventListener('scroll', () => {
-    // Si el menú está abierto, ignoramos el scroll para no romper el diseño azul
     if (menuMobile.classList.contains('menu-open')) return;
     
+    // Si la página NO es transparente (es blanca), no necesitamos cambiar colores al hacer scroll
     if (!isTransparent) return;
 
     if (window.scrollY > 50) {
@@ -196,29 +191,28 @@ const links = [
       mobileBtn.classList.remove('text-gray-800');
   }
 
-  // Lógica Menú Móvil (CORREGIDA PARA EL FONDO AZUL)
+  // MENÚ MÓVIL
   mobileBtn.addEventListener('click', () => {
     const isOpen = menuMobile.classList.contains('menu-open');
 
     if (!isOpen) {
-        // ABRIR MENÚ
+        // ABRIR
         menuMobile.classList.remove('hidden');
         setTimeout(() => menuMobile.classList.add('menu-open'), 10);
 
-        // Iconos
         iconMenu.classList.add('hidden');
         iconClose.classList.remove('hidden');
 
-        // COLORES AL ABRIR:
-        // Como el fondo es AZUL, queremos el logo BLANCO y el botón BLANCO.
-        logoContainer.classList.remove('logo-blue'); // Forzamos blanco
-        mobileBtn.classList.remove('text-gray-800'); // Quitamos gris si veníamos de scroll
-        mobileBtn.classList.add('text-white');       // Forzamos blanco
+        // Al abrir (fondo azul), queremos logo BLANCO siempre
+        logoContainer.classList.remove('logo-blue'); 
+        
+        mobileBtn.classList.remove('text-gray-800');
+        mobileBtn.classList.add('text-white');
         
         document.body.style.overflow = 'hidden';
 
     } else {
-        // CERRAR MENÚ
+        // CERRAR
         menuMobile.classList.remove('menu-open');
         setTimeout(() => menuMobile.classList.add('hidden'), 300);
 
@@ -227,19 +221,23 @@ const links = [
         
         document.body.style.overflow = '';
 
-        // RESTAURAR COLORES SEGÚN EL SCROLL
-        if (window.scrollY > 50 && isTransparent) {
-            // Si estábamos con scroll abajo (barra blanca), restauramos colores oscuros
-            logoContainer.classList.add('logo-blue');
-            mobileBtn.classList.add('text-gray-800');
-            mobileBtn.classList.remove('text-white');
-        } else if (!isTransparent) {
-             // Si es una página interior (siempre blanca), restauramos colores oscuros
+        // Restaurar estado
+        if (isTransparent) {
+            // Si es home y estamos arriba -> Blanco
+            if (window.scrollY <= 50) {
+                logoContainer.classList.remove('logo-blue');
+                mobileBtn.classList.add('text-white');
+            } else {
+                // Si es home y estamos abajo -> Azul
+                logoContainer.classList.add('logo-blue');
+                mobileBtn.classList.add('text-gray-800');
+            }
+        } else {
+            // Si es página interior (Blog) -> Azul
             logoContainer.classList.add('logo-blue');
             mobileBtn.classList.add('text-gray-800');
             mobileBtn.classList.remove('text-white');
         }
-        // Si estamos arriba y es transparente, se queda blanco (por defecto)
     }
   });
 </script>

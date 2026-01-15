@@ -13,7 +13,20 @@ const proyectosCollection = defineCollection({
       // Puedes añadir más campos: precio, fechaEntrega, etc.
     }),
 });
+// Definimos el "esquema" (los campos que tendrá cada entrada del blog)
+const blogCollection = defineCollection({
+  type: 'content',
+  schema: ({ image }) => z.object({
+    titulo: z.string(),
+    fecha: z.date(),
+    imagen: image(),
+    descripcion: z.string(),
+    autor: z.string().default('Equipo TPH'),
+    categoria: z.string().optional(), // Ej: "Corporativo", "Obras", "Prensa"
+  }),
+});
 
 export const collections = {
   proyectos: proyectosCollection,
+  blog: blogCollection,
 };
