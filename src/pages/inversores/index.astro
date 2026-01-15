@@ -1,0 +1,140 @@
+---
+// src/pages/inversores/index.astro
+import BaseHead from '../../components/BaseHead.astro';
+import Navbar from '../../components/Navbar.astro';
+import { Image } from 'astro:assets';
+import imgFondo from '../../assets/edificio-1.jpg'; 
+---
+
+<html lang="es">
+  <head>
+    <BaseHead 
+      title="Acceso Inversores | Tu Primer Hogar" 
+      description="Área privada." 
+    />
+  </head>
+  <!-- Body base -->
+  <body class="bg-gray-900 min-h-screen relative font-sans">
+    
+    <!-- NAVBAR (z-50 para estar siempre encima) -->
+    <Navbar isTransparent={true} />
+
+    <!-- FONDO -->
+    <div class="fixed inset-0 z-0">
+        <Image 
+            src={imgFondo} 
+            alt="Fondo corporativo" 
+            class="w-full h-full object-cover"
+        />
+        <div class="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"></div>
+    </div>
+
+    <!-- 
+       CONTENEDOR PRINCIPAL
+       CAMBIO AQUÍ:
+       - pt-32: Padding Top de 128px. Esto empuja todo el contenido hacia abajo
+         lo suficiente para librar el menú y el logo.
+       - flex-col: Asegura el orden vertical.
+    -->
+    <main class="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-32 pb-12">
+
+        <!-- TARJETA -->
+        <div class="w-full max-w-[420px] bg-white rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10">
+            
+            <!-- Encabezado -->
+            <div class="bg-blue-600 p-8 text-center">
+                <h1 class="text-xl font-bold text-white uppercase tracking-wider">
+                    Área Privada
+                </h1>
+                <p class="text-blue-100 text-sm mt-2 font-light">
+                    Introduce tus credenciales
+                </p>
+            </div>
+
+            <!-- Formulario -->
+            <div class="p-8">
+                <form id="login-form" class="space-y-5">
+                    
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Usuario</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
+                            </div>
+                            <input type="text" id="usuario" required class="pl-10 w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="usuario">
+                        </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-1">Contraseña</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+                            </div>
+                            <input type="password" id="password" required class="pl-10 w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <div id="error-msg" class="hidden p-3 rounded-lg bg-red-50 text-red-600 text-sm text-center border border-red-100 flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>Usuario o contraseña incorrectos</span>
+                    </div>
+
+                    <button type="submit" class="w-full bg-blue-600 text-white font-bold py-3.5 rounded-lg hover:bg-blue-700 transition-all duration-200 shadow-lg mt-2">
+                        Acceder
+                    </button>
+                    
+                    <div class="text-center pt-4">
+                        <a href="#" class="text-xs text-gray-500 hover:text-blue-600 transition-colors">¿Has olvidado tu contraseña?</a>
+                    </div>
+
+                </form>
+            </div>
+            
+            <div class="bg-gray-50 px-8 py-4 text-center border-t border-gray-200">
+                <p class="text-xs text-gray-600">
+                    ¿No eres inversor? <a href="/contacto" class="text-blue-600 font-bold hover:underline">Solicita información</a>
+                </p>
+            </div>
+        </div>
+
+    </main>
+
+    <div class="fixed bottom-4 w-full text-center z-20 pointer-events-none">
+        <p class="text-xs text-gray-400/80">
+            &copy; {new Date().getFullYear()} Tu Primer Hogar. Conexión cifrada SSL.
+        </p>
+    </div>
+
+    <script is:inline>
+        const form = document.getElementById('login-form');
+        const errorMsg = document.getElementById('error-msg');
+        const userInput = document.getElementById('usuario');
+        const passInput = document.getElementById('password');
+
+        if(form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                const usuario = userInput.value.trim();
+                const pass = passInput.value.trim();
+
+                if(usuario === 'demo' && pass === '1234') {
+                    window.location.href = '/inversores/dashboard';
+                } else {
+                    errorMsg.classList.remove('hidden');
+                    userInput.classList.add('border-red-500', 'bg-red-50');
+                    passInput.classList.add('border-red-500', 'bg-red-50');
+                    userInput.addEventListener('input', clearError);
+                    passInput.addEventListener('input', clearError);
+                }
+            });
+
+            function clearError() {
+                errorMsg.classList.add('hidden');
+                userInput.classList.remove('border-red-500', 'bg-red-50');
+                passInput.classList.remove('border-red-500', 'bg-red-50');
+            }
+        }
+    </script>
+  </body>
+</html>

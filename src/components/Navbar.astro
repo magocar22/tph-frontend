@@ -1,0 +1,245 @@
+---
+import logoBlanco from '../assets/tph-logo-blanco.png';
+
+interface Props {
+  isTransparent?: boolean;
+}
+
+const { isTransparent = false } = Astro.props;
+
+const links = [
+  { name: 'Inicio', url: '/' },
+  { name: 'El Modelo', url: '/modelo' },
+  { name: 'Proyectos', url: '/proyectos' },
+];
+---
+
+<nav 
+  id="main-navbar" 
+  class:list={[
+    "fixed top-0 w-full z-50 transition-all duration-300",
+    isTransparent 
+      ? "bg-transparent py-6" 
+      : "bg-white py-4 shadow-md"
+  ]}
+>
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex justify-between items-center">
+      
+      <!-- LOGO -->
+      <!-- z-50 para que siempre esté encima del menú azul -->
+      <a href="/" class="flex items-center relative z-50" aria-label="Volver al inicio">
+        <div id="logo-container" class="transition-all duration-300">
+             <div 
+                id="logo-mask"
+                class="w-48 md:w-64 h-14 md:h-20"
+                style={`--logo-url: url('${logoBlanco.src}')`}
+             ></div>
+        </div>
+      </a>
+
+      <!-- MENÚ ESCRITORIO (md:flex) -->
+      <div class="hidden md:flex items-center space-x-8">
+        {links.map(link => (
+          <a 
+            href={link.url} 
+            class:list={[
+              "nav-link text-sm font-medium transition-colors hover:text-blue-400",
+              isTransparent ? "text-white" : "text-gray-600 hover:text-blue-600"
+            ]}
+          >
+            {link.name}
+          </a>
+        ))}
+
+        <a 
+            id="btn-inversores"
+            href="/inversores" 
+            class:list={[
+                "text-sm font-medium px-4 py-2 rounded-full border transition-all",
+                isTransparent 
+                    ? "border-white text-white hover:bg-white hover:text-blue-900" 
+                    : "border-blue-600 text-blue-600 hover:bg-blue-50"
+            ]}
+        >
+            Área Inversores
+        </a>
+
+        <a 
+            href="/contacto" 
+            class="bg-blue-600 text-white text-sm font-bold px-5 py-2.5 rounded-full hover:bg-blue-700 transition-transform hover:-translate-y-0.5 shadow-lg"
+        >
+            Contactar
+        </a>
+      </div>
+
+      <!-- BOTÓN HAMBURGUESA (Visible solo en móvil) -->
+      <!-- z-50 para que se vea sobre el fondo azul -->
+      <div class="md:hidden flex items-center relative z-50">
+        <button id="mobile-menu-btn" class:list={["focus:outline-none transition-colors p-2", isTransparent ? "text-white" : "text-gray-800"]}>
+          <!-- Icono Hamburguesa -->
+          <svg id="icon-menu" class="w-8 h-8 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+          </svg>
+          <!-- Icono X (Cerrar) -->
+          <svg id="icon-close" class="hidden w-8 h-8 transform transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+          </svg>
+        </button>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- 
+    MENÚ MÓVIL (PANTALLA COMPLETA AZUL)
+    - bg-blue-600: Fondo azul sólido corporativo.
+    - text-white: Todo el texto blanco.
+  -->
+  <div id="mobile-menu" class="hidden md:hidden fixed inset-0 bg-blue-600 z-40 transition-opacity duration-300 opacity-0 pointer-events-none">
+    
+    <!-- Contenido centrado -->
+    <div class="flex flex-col items-center justify-center h-full space-y-8 p-6">
+      
+      {links.map(link => (
+        <a href={link.url} class="text-white font-bold text-3xl hover:text-blue-200 transition-colors">
+          {link.name}
+        </a>
+      ))}
+      
+      <!-- Línea separadora sutil -->
+      <hr class="w-16 border-blue-400 opacity-50" />
+      
+      <!-- Botón Inversores (Ahora se ve perfecto en blanco) -->
+      <a href="/inversores" class="text-blue-100 font-medium text-lg flex items-center hover:text-white transition-colors">
+        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
+        Área Inversores
+      </a>
+      
+      <!-- Botón Contactar (Invertido: Fondo blanco, texto azul) -->
+      <a href="/contacto" class="w-full max-w-xs bg-white text-blue-600 text-center font-bold text-lg py-4 rounded-2xl hover:bg-blue-50 shadow-xl transform active:scale-95 transition-all">
+        Contactar ahora
+      </a>
+
+    </div>
+  </div>
+
+</nav>
+
+<style>
+  #logo-mask {
+    background-color: white;
+    mask-image: var(--logo-url);
+    -webkit-mask-image: var(--logo-url);
+    mask-size: contain;
+    -webkit-mask-size: contain;
+    mask-repeat: no-repeat;
+    -webkit-mask-repeat: no-repeat;
+    mask-position: center;
+    -webkit-mask-position: center;
+    transition: background-color 0.3s ease;
+  }
+  .logo-blue #logo-mask {
+    background-color: #2563EB !important;
+  }
+  
+  .menu-open {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+</style>
+
+<script is:inline define:vars={{ isTransparent }}>
+  const navbar = document.getElementById('main-navbar');
+  const logoContainer = document.getElementById('logo-container');
+  const navLinks = document.querySelectorAll('.nav-link');
+  const btnInversores = document.getElementById('btn-inversores');
+  
+  const mobileBtn = document.getElementById('mobile-menu-btn');
+  const iconMenu = document.getElementById('icon-menu');
+  const iconClose = document.getElementById('icon-close');
+  const menuMobile = document.getElementById('mobile-menu');
+
+  // Lógica de Scroll (Igual que antes)
+  window.addEventListener('scroll', () => {
+    // Si el menú está abierto, ignoramos el scroll para no romper el diseño azul
+    if (menuMobile.classList.contains('menu-open')) return;
+    
+    if (!isTransparent) return;
+
+    if (window.scrollY > 50) {
+      applyScrolledStyles();
+    } else {
+      applyTransparentStyles();
+    }
+  });
+
+  function applyScrolledStyles() {
+      navbar.classList.add('bg-white', 'shadow-md', 'py-4');
+      navbar.classList.remove('bg-transparent', 'py-6');
+      logoContainer.classList.add('logo-blue'); 
+      navLinks.forEach(l => { l.classList.remove('text-white'); l.classList.add('text-gray-600'); });
+      btnInversores.classList.remove('border-white', 'text-white', 'hover:bg-white', 'hover:text-blue-900');
+      btnInversores.classList.add('border-blue-600', 'text-blue-600', 'hover:bg-blue-50');
+      mobileBtn.classList.remove('text-white');
+      mobileBtn.classList.add('text-gray-800');
+  }
+
+  function applyTransparentStyles() {
+      navbar.classList.add('bg-transparent', 'py-6');
+      navbar.classList.remove('bg-white', 'shadow-md', 'py-4');
+      logoContainer.classList.remove('logo-blue');
+      navLinks.forEach(l => { l.classList.add('text-white'); l.classList.remove('text-gray-600'); });
+      btnInversores.classList.add('border-white', 'text-white', 'hover:bg-white', 'hover:text-blue-900');
+      btnInversores.classList.remove('border-blue-600', 'text-blue-600', 'hover:bg-blue-50');
+      mobileBtn.classList.add('text-white');
+      mobileBtn.classList.remove('text-gray-800');
+  }
+
+  // Lógica Menú Móvil (CORREGIDA PARA EL FONDO AZUL)
+  mobileBtn.addEventListener('click', () => {
+    const isOpen = menuMobile.classList.contains('menu-open');
+
+    if (!isOpen) {
+        // ABRIR MENÚ
+        menuMobile.classList.remove('hidden');
+        setTimeout(() => menuMobile.classList.add('menu-open'), 10);
+
+        // Iconos
+        iconMenu.classList.add('hidden');
+        iconClose.classList.remove('hidden');
+
+        // COLORES AL ABRIR:
+        // Como el fondo es AZUL, queremos el logo BLANCO y el botón BLANCO.
+        logoContainer.classList.remove('logo-blue'); // Forzamos blanco
+        mobileBtn.classList.remove('text-gray-800'); // Quitamos gris si veníamos de scroll
+        mobileBtn.classList.add('text-white');       // Forzamos blanco
+        
+        document.body.style.overflow = 'hidden';
+
+    } else {
+        // CERRAR MENÚ
+        menuMobile.classList.remove('menu-open');
+        setTimeout(() => menuMobile.classList.add('hidden'), 300);
+
+        iconMenu.classList.remove('hidden');
+        iconClose.classList.add('hidden');
+        
+        document.body.style.overflow = '';
+
+        // RESTAURAR COLORES SEGÚN EL SCROLL
+        if (window.scrollY > 50 && isTransparent) {
+            // Si estábamos con scroll abajo (barra blanca), restauramos colores oscuros
+            logoContainer.classList.add('logo-blue');
+            mobileBtn.classList.add('text-gray-800');
+            mobileBtn.classList.remove('text-white');
+        } else if (!isTransparent) {
+             // Si es una página interior (siempre blanca), restauramos colores oscuros
+            logoContainer.classList.add('logo-blue');
+            mobileBtn.classList.add('text-gray-800');
+            mobileBtn.classList.remove('text-white');
+        }
+        // Si estamos arriba y es transparente, se queda blanco (por defecto)
+    }
+  });
+</script>

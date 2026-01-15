@@ -1,0 +1,122 @@
+---
+import { getCollection } from 'astro:content';
+import { Image } from 'astro:assets';
+
+// Componentes
+import BaseHead from '../../components/BaseHead.astro';
+import Navbar from '../../components/Navbar.astro'; // <--- NUEVO
+import Footer from '../../components/Footer.astro';
+
+// Assets
+// Puedes cambiar esta foto por una de "edificios" o "ciudad"
+import imgCabecera from '../../assets/fondo-salon.jpg'; 
+
+// Obtener proyectos de la colección
+const proyectos = await getCollection('proyectos');
+---
+
+<html lang="es">
+  <head>
+    <BaseHead 
+      title="Nuestros Proyectos | Tu Primer Hogar" 
+      description="Catálogo de promociones activas. Descubre las viviendas disponibles con nuestro modelo de alquiler con opción a compra." 
+    />
+  </head>
+  <body class="bg-gray-50">
+    
+    <!-- 
+      1. MENÚ PRINCIPAL
+      Usamos isTransparent={true} para que quede elegante sobre la foto
+    -->
+    <Navbar isTransparent={true} />
+
+    <!-- 
+      2. CABECERA CON IMAGEN (Mini Hero)
+      Mismo estilo que contacto, manteniendo coherencia de marca.
+    -->
+    <header class="relative h-[35vh] min-h-[300px] flex flex-col items-center justify-center bg-cover bg-center" style={`background-image: url('${imgCabecera.src}');`}>
+        
+        <!-- Capa oscura de contraste -->
+        <div class="absolute inset-0 bg-blue-900/70"></div>
+
+        <div class="relative z-10 text-center px-4 mt-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
+                Proyectos en curso
+            </h1>
+            <p class="text-blue-100 text-lg mt-4 max-w-2xl mx-auto font-light">
+                Descubre las promociones donde ya puedes acceder a tu vivienda sin entrada.
+            </p>
+        </div>
+
+    </header>
+
+    <!-- 
+      3. LISTADO DE PROYECTOS 
+    -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+        
+        <!-- Si no hay proyectos, mostramos un aviso -->
+        {proyectos.length === 0 && (
+            <div class="text-center py-20">
+                <p class="text-gray-500 text-xl">Próximamente publicaremos nuevas promociones.</p>
+            </div>
+        )}
+
+        <!-- Grid de Tarjetas -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+            
+            {proyectos.map((proyecto) => (
+                <article class="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full hover:-translate-y-2">
+                    
+                    <!-- Imagen de la tarjeta -->
+                    <div class="h-64 overflow-hidden relative">
+                        <Image 
+                            src={proyecto.data.imagenPrincipal} 
+                            alt={proyecto.data.titulo} 
+                            width={600}
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" 
+                        />
+                        
+                        <!-- Badge de Estado (Flotante) -->
+                        <div class="absolute top-4 left-4">
+                            <span class={`
+                                px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm
+                                ${proyecto.data.estado === 'En comercialización' ? 'bg-blue-600 text-white' : ''}
+                                ${proyecto.data.estado === 'En construcción' ? 'bg-yellow-500 text-white' : ''}
+                                ${proyecto.data.estado === 'Entregado' ? 'bg-green-600 text-white' : ''}
+                            `}>
+                                {proyecto.data.estado}
+                            </span>
+                        </div>
+                    </div>
+                    
+                    <!-- Contenido de la tarjeta -->
+                    <div class="p-8 flex-1 flex flex-col">
+                        
+                        <div class="flex items-center text-sm text-gray-500 mb-3">
+                            <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                            {proyecto.data.ubicacion}
+                        </div>
+
+                        <h2 class="text-2xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">
+                            {proyecto.data.titulo}
+                        </h2>
+                        
+                        <p class="text-gray-600 mb-8 line-clamp-3 flex-grow leading-relaxed">
+                            {proyecto.data.descripcionCorta}
+                        </p>
+                        
+                        <!-- Botón -->
+                        <a href={`/proyectos/${proyecto.slug}`} class="block text-center w-full bg-gray-50 hover:bg-blue-600 text-gray-900 hover:text-white font-bold py-4 rounded-xl transition-all duration-300">
+                            Ver detalles y planos
+                        </a>
+                    </div>
+                </article>
+            ))}
+
+        </div>
+    </main>
+
+    <Footer />
+  </body>
+</html>

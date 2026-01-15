@@ -1,178 +1,162 @@
 ---
 // src/components/Contacto.astro
-// IMPORTANTE: Pon aquí la clave que te llegó al email desde Web3Forms
-const ACCESS_KEY = "TU-ACCESS-KEY-AQUI"; 
+const ACCESS_KEY = "TU-ACCESS-KEY-AQUI"; // <--- REVISA QUE TENGAS TU CLAVE AQUÍ
+
+// Recibimos una propiedad llamada "simple". 
+// Si no se la pasamos, por defecto es false (modo normal).
+const { simple = false } = Astro.props;
 ---
 
-<section class="py-16 md:py-24 bg-blue-50" id="contacto">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+<!-- 
+  CONDICIÓN 1: EL CONTENEDOR EXTERNO
+  Si es simple: Usamos un div sin padding (para que encaje en el sidebar).
+  Si NO es simple: Usamos <section> con padding grande y fondo azul (para la página de contacto).
+-->
+<div class={simple ? "w-full" : "py-16 md:py-24 bg-blue-50"} id="contacto">
+  <div class={simple ? "" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8"}>
     
-    <!-- GRID DE 2 COLUMNAS -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
+    <!-- 
+      CONDICIÓN 2: EL GRID (Columnas)
+      Si es simple: Bloque único (1 columna).
+      Si NO es simple: Grid de 2 columnas (Texto izq + Form der).
+    -->
+    <div class={simple ? "" : "grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start"}>
       
-      <!-- ============================================ -->
-      <!-- COLUMNA IZQUIERDA: INFORMACIÓN Y CONFIANZA -->
-      <!-- ============================================ -->
-      <div class="space-y-8">
-        <div>
-          <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-            ¿Tienes dudas? <br/>
-            <span class="text-blue-600">Hablemos de tu futuro hogar.</span>
-          </h2>
-          <p class="text-gray-600 text-lg leading-relaxed">
-            Nuestro equipo te explicará paso a paso cómo funciona el modelo sin entrada. Sin compromiso y con total transparencia.
-          </p>
+      <!-- 
+        CONDICIÓN 3: LA COLUMNA IZQUIERDA (Texto y Teléfonos)
+        {!simple && ...} significa: "Si NO es simple, muestra esto".
+        Si es simple, este bloque desaparece por completo.
+      -->
+      {!simple && (
+        <div class="space-y-8">
+            <div>
+            <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+                ¿Tienes dudas? <br/>
+                <span class="text-blue-600">Hablemos de tu futuro hogar.</span>
+            </h2>
+            <p class="text-gray-600 text-lg leading-relaxed">
+                Nuestro equipo te explicará paso a paso cómo funciona el modelo sin entrada. Sin compromiso y con total transparencia.
+            </p>
+            </div>
+
+            <!-- BLOQUE DE DATOS DE CONTACTO -->
+            <div class="space-y-6">
+            <!-- Teléfono -->
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
+                </div>
+                </div>
+                <div class="ml-4">
+                <h3 class="text-lg font-medium text-gray-900">Teléfono</h3>
+                <p class="mt-1 text-gray-600">+34 952 000 000</p>
+                <p class="text-sm text-gray-500">Lunes a Viernes de 9:00 a 18:00</p>
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="flex items-start">
+                <div class="flex-shrink-0">
+                <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600">
+                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                </div>
+                </div>
+                <div class="ml-4">
+                <h3 class="text-lg font-medium text-gray-900">Email</h3>
+                <p class="mt-1 text-gray-600">info@tuprimerhogar.es</p>
+                <p class="text-sm text-gray-500">Respondemos en menos de 24h</p>
+                </div>
+            </div>
+            </div>
         </div>
+      )}
 
-        <!-- BLOQUE DE DATOS DE CONTACTO -->
-        <div class="space-y-6">
-          
-          <!-- Teléfono -->
-          <div class="flex items-start">
-            <div class="flex-shrink-0">
-              <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-              </div>
-            </div>
-            <div class="ml-4">
-              <h3 class="text-lg font-medium text-gray-900">Teléfono</h3>
-              <p class="mt-1 text-gray-600">+34 952 000 000</p>
-              <p class="text-sm text-gray-500">Lunes a Viernes de 9:00 a 18:00</p>
-            </div>
-          </div>
-
-          <!-- Email -->
-          <div class="flex items-start">
-            <div class="flex-shrink-0">
-              <div class="flex items-center justify-center w-12 h-12 rounded-full bg-blue-100 text-blue-600">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-              </div>
-            </div>
-            <div class="ml-4">
-              <h3 class="text-lg font-medium text-gray-900">Email</h3>
-              <p class="mt-1 text-gray-600">info@tuprimerhogar.es</p>
-              <p class="text-sm text-gray-500">Respondemos en menos de 24h</p>
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-      <!-- ============================================ -->
-      <!-- COLUMNA DERECHA: EL FORMULARIO FUNCIONAL -->
-      <!-- ============================================ -->
-      <div class="bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-gray-100">
+      <!-- 
+        CONDICIÓN 4: LA TARJETA DEL FORMULARIO
+        Si es simple: Quitamos la sombra, el borde y el fondo blanco (porque ya está dentro de una caja en el sidebar).
+      -->
+      <div class={simple ? "" : "bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-gray-100"}>
         
-        <form action="https://api.web3forms.com/submit" method="POST" id="form-contacto" class="space-y-6">
+        <form action="https://api.web3forms.com/submit" method="POST" id="form-contacto" class="space-y-4"> <!-- space-y-4 es más compacto -->
           
-          <!-- 1. CAMPOS DE CONFIGURACIÓN DE WEB3FORMS -->
           <input type="hidden" name="access_key" value={ACCESS_KEY}>
           <input type="hidden" name="subject" value="Nuevo Lead desde Tu Primer Hogar">
           <input type="hidden" name="from_name" value="Web Tu Primer Hogar">
-          
-          <!-- Honeypot (Trampa antispam oculta) -->
           <input type="checkbox" name="botcheck" class="hidden" style="display: none;">
       
-          <!-- 2. CAMPOS DEL FORMULARIO -->
           <div>
-            <label for="nombre" class="block text-sm font-medium text-gray-700 mb-2">Nombre completo</label>
-            <input type="text" id="nombre" name="nombre" required placeholder="Ej: Juan Pérez" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200" />
+            <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
+            <input type="text" id="nombre" name="nombre" required placeholder="Tu nombre" class="w-full px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none" />
           </div>
       
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <!-- 
+             CONDICIÓN 5: CAMPOS EN LÍNEA vs APILADOS
+             En el sidebar es muy estrecho, así que Email y Teléfono deben ir uno debajo de otro siempre (grid-cols-1).
+          -->
+          <div class={simple ? "grid grid-cols-1 gap-4" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
             <div>
-              <label for="email" class="block text-sm font-medium text-gray-700 mb-2">Correo electrónico</label>
-              <input type="email" id="email" name="email" required placeholder="tu@email.com" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200" />
+              <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" id="email" name="email" required placeholder="tu@email.com" class="w-full px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none" />
             </div>
             <div>
-              <label for="telefono" class="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
-              <input type="tel" id="telefono" name="telefono" required placeholder="600 00 00 00" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200" />
+              <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+              <input type="tel" id="telefono" name="telefono" required placeholder="600 00 00 00" class="w-full px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none" />
             </div>
           </div>
       
           <div>
-            <label for="mensaje" class="block text-sm font-medium text-gray-700 mb-2">¿Cómo podemos ayudarte?</label>
-            <textarea id="mensaje" name="mensaje" rows="4" required placeholder="Me gustaría saber más sobre..." class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 focus:bg-white focus:ring-2 focus:ring-blue-200 outline-none transition-all duration-200 resize-none"></textarea>
+            <label for="mensaje" class="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
+            <textarea id="mensaje" name="mensaje" rows={simple ? "3" : "4"} required placeholder="Me interesa..." class="w-full px-4 py-2 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none resize-none"></textarea>
           </div>
       
-          <!-- Checkbox Legal -->
           <div class="flex items-start">
             <div class="flex items-center h-5">
               <input id="privacidad" name="privacidad" type="checkbox" required class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
             </div>
-            <div class="ml-3 text-sm">
-              <label for="privacidad" class="text-gray-500">
-                He leído y acepto la <a href="/politica-privacidad" target="_blank" class="text-blue-600 hover:underline">Política de Privacidad</a>.
-              </label>
+            <div class="ml-3 text-xs text-gray-500"> <!-- Texto legal más pequeño en sidebar -->
+              Acepto la <a href="/politica-privacidad" target="_blank" class="text-blue-600 hover:underline">Política de Privacidad</a>.
             </div>
           </div>
       
-          <!-- Botón de Envío -->
-          <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white font-bold py-4 px-8 rounded-xl hover:bg-blue-700 transform transition-all duration-200 hover:-translate-y-1 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed">
-            Enviar consulta gratis
+          <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white font-bold py-3 px-6 rounded-xl hover:bg-blue-700 transition-colors shadow-md text-sm md:text-base">
+            Solicitar info
           </button>
       
-          <!-- MENSAJE DE RESULTADO -->
-          <div id="result" class="hidden text-center p-4 rounded-lg mt-4"></div>
+          <div id="result" class="hidden text-center p-3 text-sm rounded-lg mt-2"></div>
       
         </form>
       </div>
 
     </div>
   </div>
-</section>
+</div>
 
-<!-- 3. SCRIPT PARA QUE FUNCIONE SIN RECARGAR -->
 <script is:inline>
+  // (Mantenemos el mismo script de antes sin cambios, funciona igual)
   const form = document.getElementById('form-contacto');
   const result = document.getElementById('result');
   const btn = document.getElementById('btn-submit');
 
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    const formData = new FormData(form);
-    const object = Object.fromEntries(formData);
-    const json = JSON.stringify(object);
+  if(form) { // Pequeña seguridad por si el form no carga
+      form.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(form);
+        const object = Object.fromEntries(formData);
+        const json = JSON.stringify(object);
 
-    btn.innerHTML = "Enviando...";
-    btn.disabled = true;
-    result.classList.add('hidden');
+        btn.innerHTML = "Enviando...";
+        btn.disabled = true;
+        result.classList.add('hidden');
 
-    fetch('https://api.web3forms.com/submit', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Accept': 'application/json'
-        },
-        body: json
-    })
-    .then(async (response) => {
-        let json = await response.json();
-        if (response.status == 200) {
-            result.classList.remove('hidden');
-            result.classList.add('bg-green-100', 'text-green-700');
-            result.innerHTML = "¡Gracias! Hemos recibido tu mensaje. Te contactaremos pronto.";
-            form.reset();
-        } else {
-            console.log(response);
-            result.classList.remove('hidden');
-            result.classList.add('bg-red-100', 'text-red-700');
-            result.innerHTML = json.message || "Algo salió mal.";
-        }
-    })
-    .catch(error => {
-        console.log(error);
-        result.classList.remove('hidden');
-        result.classList.add('bg-red-100', 'text-red-700');
-        result.innerHTML = "Error de conexión.";
-    })
-    .finally(() => {
-        btn.innerHTML = "Enviar consulta gratis";
-        btn.disabled = false;
-        setTimeout(() => {
-            result.classList.add('hidden');
-            result.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
-        }, 5000);
-    });
-  });
-</script>
+        fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+            body: json
+        })
+        .then(async (response) => {
+            let json = await response.json();
+            if (response.status == 200) {
+                result.classList.remove('hidden');
+                result.classList.add('bg-green-100', 'text-green-700');
+                result.innerHTML = "¡Recibido! Te contactaremos.";

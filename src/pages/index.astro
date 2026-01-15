@@ -10,6 +10,7 @@ import Contacto from "../components/Contacto.astro";
 import Footer from "../components/Footer.astro";
 import { Image } from "astro:assets";
 import imgLogo from "../assets/tph-logo-blanco.png";
+import Navbar from "../components/Navbar.astro";
 ---
 
 <html lang="es">
@@ -21,39 +22,15 @@ import imgLogo from "../assets/tph-logo-blanco.png";
   </head>
   <body>
     <!-- SECCIÓN HERO (PORTADA) -->
-
+    <Navbar isTransparent={true} />
     <section
       class="relative h-screen min-h-[600px] flex items-center justify-center bg-cover bg-center"
       style="background-image: url('/img/hero-image.jpg');"
     >
-      <!-- 1. CAPA OSCURA (OVERLAY) -->
+      <!-- CAPA OSCURA (OVERLAY) -->
       <div class="absolute inset-0 bg-black/50"></div>
 
-      <!-- 2. CABECERA INTEGRADA (LOGO) -->
-      <!-- 
-           absolute top-0: Lo pegamos al techo.
-           z-20: Por encima de la capa oscura.
-           w-full: Ocupa todo el ancho.
-        -->
-      <header
-        class="absolute top-0 left-0 w-full z-20 py-8 sm:py-12 transition-all duration-500"
-      >
-        <div class="max-w-7xl mx-auto px-4 flex justify-center">
-          <!-- LOGO BLANCO CON TRANSPARENCIA SUTIL -->
-          <!-- opacity-90: Le da ese toque elegante de no ser "blanco nuclear" -->
-          <a href="/" class="hover:opacity-100 transition-opacity opacity-90">
-            <Image
-              src={imgLogo}
-              alt="Logotipo Tu Primer Hogar"
-              width={300}
-              loading="eager"
-              class="h-auto w-48 md:w-64 drop-shadow-lg"
-            />
-          </a>
-        </div>
-      </header>
-
-      <!-- 3. CONTENIDO CENTRAL -->
+      <!-- CONTENIDO CENTRAL -->
       <div
         class="relative z-10 text-center text-white px-4 max-w-5xl mx-auto mt-16"
       >

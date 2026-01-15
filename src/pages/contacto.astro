@@ -1,70 +1,58 @@
 ---
 // src/pages/contacto.astro
 import BaseHead from '../components/BaseHead.astro';
-import { Image } from "astro:assets";
+import Navbar from '../components/Navbar.astro'; // <--- NUEVO
+import ContactoForm from '../components/Contacto.astro';
+import Footer from '../components/Footer.astro';
 
-// Imports de componentes
-import ContactoForm from "../components/Contacto.astro";
-import Footer from "../components/Footer.astro";
-
-// Assets (Logo y Fondo)
-import logoBlanco from "../assets/tph-logo-blanco.png";
-import imgFondo from "../assets/pareja-suelo.jpg";
+// Assets
+// Borramos el logoBlanco porque ya está en el Navbar
+import imgFondo from '../assets/pareja-suelo.jpg'; 
 ---
 
 <html lang="es">
   <head>
-    <BaseHead
-      title="Contacto | Tu Primer Hogar"
-      description="Resuelve tus dudas sobre el alquiler con opción a compra. Contacta con nuestro equipo de expertos sin compromiso."
+    <BaseHead 
+      title="Contacto | Tu Primer Hogar" 
+      description="Estamos aquí para ayudarte. Contacta con nosotros para resolver tus dudas sobre el alquiler con opción a compra." 
     />
   </head>
   <body class="bg-gray-50">
-    <!-- ============================================ -->
-    <!-- CABECERA "MINI HERO" (Estilo Original) -->
-    <!-- ============================================ -->
-    <!-- h-[40vh]: Altura del 40% de la pantalla (más corto que la home) -->
-    <header
-      class="relative h-[40vh] min-h-[300px] flex flex-col items-center justify-center bg-cover bg-center"
-      style={`background-image: url('${imgFondo.src}');`}
-    >
-      <!-- Capa oscura para que se lea el texto y el logo -->
-      <div class="absolute inset-0 bg-blue-900/60"></div>
+    
+    <!-- 
+      MENÚ DE NAVEGACIÓN 
+      Lo ponemos transparente para que se fusione con la foto de abajo
+    -->
+    <Navbar isTransparent={true} />
 
-      <!-- LOGO (Arriba del todo, igual que en la home) -->
-      <div class="absolute top-0 left-0 w-full p-6 flex justify-center z-20">
-        <a href="/" class="hover:opacity-90 transition-opacity">
-          <Image
-            src={logoBlanco}
-            alt="Volver al inicio"
-            width={200}
-            class="h-auto w-40 md:w-48 drop-shadow-md"
-          />
-        </a>
-      </div>
+    <!-- 
+      CABECERA "MINI HERO" 
+      Hemos quitado el logo central. Ahora solo queda el Título.
+    -->
+    <header class="relative h-[40vh] min-h-[300px] flex flex-col items-center justify-center bg-cover bg-center" style={`background-image: url('${imgFondo.src}');`}>
+        
+        <!-- Capa oscura -->
+        <div class="absolute inset-0 bg-blue-900/60"></div>
 
-      <!-- TÍTULO DE LA PÁGINA -->
-      <div class="relative z-10 text-center px-4 mt-8">
-        <h1
-          class="text-4xl md:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-lg"
-        >
-          Contacto
-        </h1>
-        <p class="text-blue-100 text-lg mt-4 max-w-xl mx-auto">
-          Estamos aquí para ayudarte a conseguir tu hogar
-        </p>
-      </div>
+        <!-- TÍTULO DE LA PÁGINA (Centrado) -->
+        <div class="relative z-10 text-center px-4 mt-10"> <!-- mt-10 para compensar el espacio del menú -->
+            <h1 class="text-4xl md:text-6xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
+                Contacto
+            </h1>
+            <p class="text-blue-100 text-lg mt-4 max-w-xl mx-auto font-light">
+                Estamos aquí para ayudarte a conseguir tu hogar
+            </p>
+        </div>
+
     </header>
 
-    <!-- ============================================ -->
-    <!-- CONTENIDO PRINCIPAL (El Formulario) -->
-    <!-- ============================================ -->
+    <!-- CONTENIDO PRINCIPAL -->
     <main>
-        <!-- Componente del Formulario de Contacto -->
-      <ContactoForm />
+        <!-- Formulario completo (sin modo simple) -->
+        <ContactoForm />
     </main>
 
-    <!-- PIE DE PÁGINA -->
     <Footer />
+
   </body>
 </html>
