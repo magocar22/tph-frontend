@@ -1,58 +1,81 @@
 ---
-import { getCollection } from 'astro:content';
 import { Image } from 'astro:assets';
 import BaseHead from '../../components/BaseHead.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
+import fetchApi from '../../lib/strapi';
+
+// 1. Usamos el renderizador oficial de Strapi (React)
+import { BlocksRenderer } from '@strapi/blocks-react-renderer';
+
+export const prerender = true;
 
 export async function getStaticPaths() {
-  const posts = await getCollection('blog');
-  return posts.map(post => ({
-    params: { slug: post.slug }, props: { post },
+  const posts = await fetchApi<any[]>({
+    endpoint: 'noticias',
+    query: { populate: '*' }
+  });
+
+  const noticiasValidas = posts.filter(post => post.slug && post.slug !== null);
+
+  return noticiasValidas.map(post => ({
+    params: { slug: post.slug }, 
+    props: { post }, 
   }));
 }
 
 const { post } = Astro.props;
-const { Content } = await post.render();
+const STRAPI_URL = "http://localhost:1337";
 ---
 
 <html lang="es">
   <head>
-    <BaseHead title={post.data.titulo} description={post.data.descripcion} />
+    <BaseHead title={post.titulo} description={post.descripcion} />
   </head>
   <body class="bg-white font-sans text-gray-800">
     
-    <!-- Navbar Blanco Sólido (Mejor para lectura) -->
-    <div class="pt-20"> <!-- Espacio para el navbar fijo -->
+    <div class="pt-20"> 
         <Navbar />
     </div>
 
     <main class="max-w-4xl mx-auto px-4 py-12">
         
-        <!-- Encabezado del Artículo -->
+        <!-- ENCABEZADO -->
         <div class="text-center mb-12">
             <span class="text-blue-600 font-bold tracking-widest text-xs uppercase mb-4 block">
-                {post.data.categoria} — {post.data.fecha.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {post.categoria} — {new Date(post.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
             </span>
             <h1 class="text-3xl md:text-5xl font-bold text-gray-900 leading-tight mb-8">
-                {post.data.titulo}
+                {post.titulo}
             </h1>
             
-            <!-- Imagen Principal -->
             <div class="rounded-3xl overflow-hidden shadow-xl mb-12 max-h-[500px]">
-                <Image src={post.data.imagen} alt={post.data.titulo} class="w-full h-full object-cover" />
+                {post.imagen ? (
+                    <Image 
+                        src={STRAPI_URL + post.imagen.url} 
+                        alt={post.titulo} 
+                        width={1200} 
+                        height={600}
+                        class="w-full h-full object-cover" 
+                    />
+                ) : (
+                    <div class="w-full h-64 bg-gray-200 flex items-center justify-center text-gray-400">Sin imagen</div>
+                )}
             </div>
         </div>
 
-        <!-- Contenido del Artículo -->
+        <!-- 
+           CONTENIDO
+           Aquí está la clave. 'prose' le da estilo a lo que pinte el BlocksRenderer.
+        -->
         <article class="prose prose-blue prose-lg mx-auto text-gray-600">
-            <Content />
+            <BlocksRenderer content={post.contenido || []} />
         </article>
 
-        <!-- Botón volver -->
         <div class="mt-16 pt-8 border-t border-gray-100 text-center">
             <a href="/blog" class="inline-flex items-center text-gray-500 hover:text-blue-600 font-medium transition-colors">
-                ← Volver a Actualidad
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Volver a Actualidad
             </a>
         </div>
 

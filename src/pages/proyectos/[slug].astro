@@ -1,117 +1,104 @@
 ---
-import { getCollection } from "astro:content";
-import BaseHead from "../../components/BaseHead.astro";
-import Footer from "../../components/Footer.astro";
-import ContactoForm from "../../components/Contacto.astro"; // Reutilizamos el form
-import { Image } from "astro:assets";
-import logoBlanco from "../../assets/tph-logo-blanco.png";
+import { Image } from 'astro:assets';
+import BaseHead from '../../components/BaseHead.astro';
+import Footer from '../../components/Footer.astro';
+import ContactoForm from '../../components/Contacto.astro';
+import logoBlanco from '../../assets/tph-logo-blanco.png'; // Para el header si quieres logo
 
-// 1. Esto genera todas las rutas estáticas al compilar
+// Conexión Strapi
+import fetchApi from '../../lib/strapi';
+import { BlocksRenderer } from '@strapi/blocks-react-renderer';
+
+export const prerender = true;
+
 export async function getStaticPaths() {
-  const proyectos = await getCollection("proyectos");
-  return proyectos.map((entry) => ({
-    params: { slug: entry.slug },
-    props: { entry },
+  const proyectos = await fetchApi<any[]>({
+    endpoint: 'proyectos',
+    query: { populate: '*' }
+  });
+
+  // Filtramos slugs válidos
+  const validos = proyectos.filter(p => p.slug && p.slug !== null);
+
+  return validos.map(proyecto => ({
+    params: { slug: proyecto.slug }, 
+    props: { proyecto }, 
   }));
 }
 
-// 2. Recuperamos los datos del proyecto actual
-const { entry } = Astro.props;
-const { Content } = await entry.render(); // Renderiza el markdown
+const { proyecto } = Astro.props;
+const STRAPI_URL = "http://localhost:1337";
 ---
 
 <html lang="es">
   <head>
-    <BaseHead
-      title={`${entry.data.titulo} | Proyecto`}
-      description={entry.data.descripcionCorta}
-    />
+    <BaseHead title={`${proyecto.titulo} | Proyecto`} description={proyecto.descripcion_corta} />
   </head>
-  <body class="bg-gray-50">
+  <body class="bg-gray-50 font-sans text-gray-800">
+    
     <!-- HEADER CON IMAGEN DEL PROYECTO -->
     <header class="relative h-[50vh] min-h-[400px] flex items-end">
-      <Image
-        src={entry.data.imagenPrincipal}
-        alt={entry.data.titulo}
-        class="absolute inset-0 w-full h-full object-cover"
-      />
-      <div
-        class="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent"
-      >
-      </div>
+        {proyecto.imagen_principal ? (
+            <Image 
+                src={STRAPI_URL + proyecto.imagen_principal.url} 
+                alt={proyecto.titulo} 
+                width={1920}
+                height={1080}
+                class="absolute inset-0 w-full h-full object-cover" 
+            />
+        ) : (
+            <div class="absolute inset-0 bg-blue-900"></div>
+        )}
+        
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+        
+        <!-- Navbar flotante de vuelta -->
+        <div class="absolute top-0 w-full p-6 z-20">
+             <a href="/proyectos" class="text-white font-bold flex items-center gap-2 hover:underline bg-black/20 px-4 py-2 rounded-full backdrop-blur-md w-fit">
+                ← Volver al listado
+             </a>
+        </div>
 
-      <!-- Navbar flotante -->
-      <div class="absolute top-0 w-full p-6 z-20">
-        <a
-          href="/proyectos"
-          class="text-white font-bold flex items-center gap-2 hover:underline"
-        >
-          ← Volver al listado
-        </a>
-      </div>
-
-      <div class="relative z-10 p-8 md:p-12 max-w-7xl mx-auto w-full">
-        <span
-          class="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold mb-4 inline-block"
-        >
-          {entry.data.estado}
-        </span>
-        <h1 class="text-4xl md:text-6xl font-bold text-white mb-2">
-          {entry.data.titulo}
-        </h1>
-        <p class="text-xl text-gray-200 flex items-center">
-          <svg
-            class="w-5 h-5 mr-2"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-            ><path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"
-            ></path><path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg
-          >
-          {entry.data.ubicacion}
-        </p>
-      </div>
+        <div class="relative z-10 p-8 md:p-12 max-w-7xl mx-auto w-full">
+            <span class="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold mb-4 inline-block shadow-lg">
+                {proyecto.estado}
+            </span>
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-2 drop-shadow-md">{proyecto.titulo}</h1>
+            <p class="text-xl text-gray-200 flex items-center">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                {proyecto.ubicacion}
+            </p>
+        </div>
     </header>
 
-    <main
-      class="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12"
-    >
-      <!-- COLUMNA IZQUIERDA: INFORMACIÓN (Markdown) -->
-      <div class="lg:col-span-2">
-        <article
-          class="prose prose-blue prose-lg max-w-none bg-white p-8 rounded-2xl shadow-sm"
-        >
-          <!-- Aquí se inyecta el texto que escribiste en el .md -->
-          <Content />
-        </article>
-      </div>
-
-      <!-- COLUMNA DERECHA: CONTACTO -->
-      <div class="lg:col-span-1">
-        <div class="sticky top-8">
-          <div class="bg-blue-600 text-white p-6 rounded-t-2xl">
-            <h3 class="text-xl font-bold">¿Te interesa este proyecto?</h3>
-            <p class="text-blue-100 text-sm mt-1">
-              Solicita el dossier completo de {entry.data.titulo}.
-            </p>
-          </div>
-
-          <div
-            class="bg-white p-6 rounded-b-2xl shadow-lg border border-gray-100"
-          >
-            <!-- AQUÍ ESTÁ EL CAMBIO: Añadimos simple={true} -->
-            <ContactoForm simple={true} />
-          </div>
+    <main class="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
+        
+        <!-- COLUMNA IZQUIERDA: INFORMACIÓN -->
+        <div class="lg:col-span-2">
+            <article class="prose prose-blue prose-lg max-w-none bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-gray-100">
+                <BlocksRenderer content={proyecto.descripcion_larga || []} />
+            </article>
         </div>
-      </div>
+
+        <!-- COLUMNA DERECHA: CONTACTO -->
+        <div class="lg:col-span-1">
+            <div class="sticky top-8">
+                <div class="bg-blue-600 text-white p-6 rounded-t-3xl shadow-lg relative overflow-hidden">
+                    <div class="relative z-10">
+                        <h3 class="text-xl font-bold">¿Te interesa este proyecto?</h3>
+                        <p class="text-blue-100 text-sm mt-1">Solicita el dossier completo de {proyecto.titulo}.</p>
+                    </div>
+                    <!-- Decoración fondo -->
+                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
+                </div>
+                
+                <div class="bg-white p-6 rounded-b-3xl shadow-xl border border-gray-100">
+                    <!-- Pasamos 'simple={true}' para que encaje en el sidebar -->
+                    <ContactoForm simple={true} />
+                </div>
+            </div>
+        </div>
+
     </main>
 
     <Footer />

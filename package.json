@@ -9,8 +9,16 @@
     "astro": "astro"
   },
   "dependencies": {
+    "@astrojs/node": "^9.5.1",
+    "@astrojs/react": "^4.4.2",
     "@astrojs/sitemap": "^3.6.0",
-    "astro": "^5.16.6"
+    "@strapi/blocks-react-renderer": "^1.0.2",
+    "@types/react": "^19.2.8",
+    "@types/react-dom": "^19.2.3",
+    "astro": "^5.16.6",
+    "qs": "^6.14.1",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3"
   },
   "devDependencies": {
     "@astrojs/tailwind": "^6.0.2",

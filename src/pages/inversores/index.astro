@@ -106,34 +106,56 @@ import imgFondo from '../../assets/edificio-1.jpg';
         </p>
     </div>
 
+<!-- SCRIPT REAL CONECTADO A STRAPI -->
     <script is:inline>
         const form = document.getElementById('login-form');
         const errorMsg = document.getElementById('error-msg');
-        const userInput = document.getElementById('usuario');
-        const passInput = document.getElementById('password');
+        const errorText = errorMsg.querySelector('span'); // Para cambiar el texto del error
 
         if(form) {
-            form.addEventListener('submit', (e) => {
+            form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const usuario = userInput.value.trim();
-                const pass = passInput.value.trim();
+                
+                const usuario = document.getElementById('usuario').value.trim();
+                const pass = document.getElementById('password').value.trim();
+                const btn = form.querySelector('button');
 
-                if(usuario === 'demo' && pass === '1234') {
-                    window.location.href = '/inversores/dashboard';
-                } else {
+                // Estado de carga
+                btn.innerHTML = "Verificando...";
+                btn.disabled = true;
+                errorMsg.classList.add('hidden');
+
+                try {
+                    // Llamamos a NUESTRA API de Astro (la que creamos en el paso 3)
+                    const response = await fetch('/api/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ identifier: usuario, password: pass })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok) {
+                        // ÉXITO: Astro ya ha puesto la cookie, solo redirigimos
+                        window.location.href = '/inversores/dashboard';
+                    } else {
+                        // ERROR
+                        throw new Error(result.message || "Error de acceso");
+                    }
+
+                } catch (err) {
+                    // Mostrar error
                     errorMsg.classList.remove('hidden');
-                    userInput.classList.add('border-red-500', 'bg-red-50');
-                    passInput.classList.add('border-red-500', 'bg-red-50');
-                    userInput.addEventListener('input', clearError);
-                    passInput.addEventListener('input', clearError);
+                    // Actualizar texto del error si quieres (opcional)
+                    // errorText.innerText = err.message; 
+                    
+                    form.classList.add('animate-shake');
+                    setTimeout(() => form.classList.remove('animate-shake'), 500);
+                    
+                    btn.innerHTML = "Acceder";
+                    btn.disabled = false;
                 }
             });
-
-            function clearError() {
-                errorMsg.classList.add('hidden');
-                userInput.classList.remove('border-red-500', 'bg-red-50');
-                passInput.classList.remove('border-red-500', 'bg-red-50');
-            }
         }
     </script>
   </body>
