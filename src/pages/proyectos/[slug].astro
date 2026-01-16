@@ -9,7 +9,7 @@ import React from 'react';
 
 export const prerender = true;
 
-// Si existe la variable de entorno (en la nube), úsala. Si no, usa localhost.
+// 1. URL DEL ENTORNO
 const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
 
 export async function getStaticPaths() {
@@ -42,7 +42,7 @@ if (!proyecto) return Astro.redirect('/proyectos');
 
 const bloques = proyecto.cuerpo || [];
 
-// RENDERIZADOR PARA IMÁGENES DENTRO DE TEXTO (Rich Text)
+// Renderizador personalizado para fotos dentro de Rich Text (Si las hubiera)
 const renderizadorPersonalizado = {
   image: ({ image }) => {
     if (!image.url) return null;
@@ -54,6 +54,11 @@ const renderizadorPersonalizado = {
     });
   }
 };
+
+// URL Imagen Principal
+const mainImageSrc = proyecto.imagen_principal?.url.startsWith('http') 
+    ? proyecto.imagen_principal.url 
+    : STRAPI_URL + proyecto.imagen_principal?.url;
 ---
 
 <html lang="es">
@@ -66,7 +71,7 @@ const renderizadorPersonalizado = {
     <header class="relative h-[50vh] min-h-[400px] flex items-end">
         {proyecto.imagen_principal ? (
             <Image 
-                src={STRAPI_URL + proyecto.imagen_principal.url} 
+                src={mainImageSrc} 
                 alt={proyecto.titulo} 
                 width={1920}
                 height={1080}
@@ -98,7 +103,7 @@ const renderizadorPersonalizado = {
 
     <main class="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
         
-        <!-- COLUMNA IZQUIERDA: INFORMACIÓN -->
+        <!-- INFORMACIÓN -->
         <div class="lg:col-span-2">
             <div class="bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-gray-100">
                 
@@ -117,30 +122,28 @@ const renderizadorPersonalizado = {
                             );
                         }
 
-                        // 2. FOTO ARTÍCULO
+                        // 2. FOTO
                         if (bloque.__component === 'blog-elementos.foto-articulo') {
-                            // En tu JSON el campo se llama 'archivo_imagen'
                             const img = bloque.archivo_imagen;
-                            
-                            if (!img) return null; // Si está vacío, no pintamos nada
+                            if (!img) return null;
+                            const imgSrc = img.url.startsWith('http') ? img.url : STRAPI_URL + img.url;
 
                             return (
                                 <figure class="my-10 not-prose">
                                     <img 
-                                        src={STRAPI_URL + img.url} 
-                                        alt={img.alternativeText || 'Imagen del proyecto'} 
+                                        src={imgSrc} 
+                                        alt={img.alternativeText || 'Imagen'} 
                                         class="w-full rounded-2xl shadow-md border border-gray-100"
                                     />
                                 </figure>
                             );
                         }
 
-                        // 3. DESCARGA PDF
+                        // 3. PDF
                         if (bloque.__component === 'blog-elementos.descarga-pdf') {
-                            // En tu JSON el campo se llama 'archivo_pdf'
                             const file = bloque.archivo_pdf;
-                            
                             if (!file) return null;
+                            const fileUrl = file.url.startsWith('http') ? file.url : STRAPI_URL + file.url;
 
                             return (
                                 <div class="my-8 p-5 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between not-prose hover:shadow-md transition-shadow">
@@ -157,7 +160,7 @@ const renderizadorPersonalizado = {
                                             </p>
                                         </div>
                                     </div>
-                                    <a href={STRAPI_URL + file.url} target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
+                                    <a href={fileUrl} target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
                                         Descargar
                                     </a>
                                 </div>
@@ -170,7 +173,7 @@ const renderizadorPersonalizado = {
             </div>
         </div>
 
-        <!-- COLUMNA DERECHA: CONTACTO -->
+        <!-- CONTACTO -->
         <div class="lg:col-span-1">
             <div class="sticky top-8">
                 <div class="bg-blue-600 text-white p-6 rounded-t-3xl shadow-lg relative overflow-hidden">

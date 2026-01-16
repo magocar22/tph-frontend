@@ -3,14 +3,14 @@ import BaseHead from '../../components/BaseHead.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 
-// 1. Configuración
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
-
 // --- SEGURIDAD ---
 const jwt = Astro.cookies.get('jwt')?.value;
 if (!jwt) return Astro.redirect('/inversores');
 
-// 2. Conexión a Strapi
+// 1. URL DINÁMICA
+const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+
+// 2. PETICIÓN A LA URL CORRECTA
 const response = await fetch(`${STRAPI_URL}/api/users/me?populate[proyectos][populate]=documentos_privados`, {
     headers: { Authorization: `Bearer ${jwt}` }
 });
@@ -18,29 +18,17 @@ const response = await fetch(`${STRAPI_URL}/api/users/me?populate[proyectos][pop
 if (!response.ok) return Astro.redirect('/api/logout');
 
 const usuario = await response.json();
+let misProyectos = usuario.proyectos || [];
 
-// --- LÓGICA DE DATOS ---
-const rawProyectos = usuario.proyectos || [];
+// Filtro de duplicados
+misProyectos = Array.from(new Map(misProyectos.map((item: any) => [item.id, item])).values());
 
-// FILTRO DE DUPLICADOS:
-// Filtramos por 'titulo' para evitar que relaciones fantasmas o errores de ID
-// muestren el mismo proyecto dos veces.
-const misProyectos = [...new Map(
-    rawProyectos
-      .filter((p: any) => p && p.titulo) // Ignoramos proyectos vacíos o corruptos
-      .map((item: any) => [item.titulo, item]) // Usamos el título como clave única
-).values()];
-
-
-// 3. Función auxiliar para estilos (UI)
-const getFileStyle = (ext: string) => {
+// Función de estilos...
+const getFileStyle = (ext) => {
     if (!ext) return 'bg-gray-50 text-gray-600';
-    const extension = ext.toLowerCase();
-    
-    if (extension.includes('pdf')) return 'bg-red-50 text-red-600';
-    if (extension.includes('xls') || extension.includes('csv')) return 'bg-green-50 text-green-600';
-    if (extension.includes('jpg') || extension.includes('png') || extension.includes('zip')) return 'bg-blue-50 text-blue-600';
-    
+    if (ext.includes('pdf')) return 'bg-red-50 text-red-600';
+    if (ext.includes('xls') || ext.includes('csv')) return 'bg-green-50 text-green-600';
+    if (ext.includes('jpg') || ext.includes('png') || ext.includes('zip')) return 'bg-blue-50 text-blue-600';
     return 'bg-gray-50 text-gray-600';
 };
 ---

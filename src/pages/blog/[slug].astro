@@ -4,15 +4,11 @@ import BaseHead from '../../components/BaseHead.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import fetchApi from '../../lib/strapi';
-
-// Importamos el renderizador de bloques para los párrafos
 import { BlocksRenderer } from '@strapi/blocks-react-renderer';
 
-// --- ESTA ES LA LÍNEA MÁGICA QUE FALTA ---
 export const prerender = true;
-// ----------------------------------------
 
-// Si existe la variable de entorno (en la nube), úsala. Si no, usa localhost.
+// 1. URL DEL ENTORNO
 const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
 
 export async function getStaticPaths() {
@@ -41,12 +37,14 @@ export async function getStaticPaths() {
 }
 
 const { post } = Astro.props;
-// Añadimos seguridad: si post no existe (por el error anterior), evitamos el crash
-if (!post) {
-  return Astro.redirect('/blog');
-}
+if (!post) return Astro.redirect('/blog');
 
 const bloques = post.cuerpo || []; 
+
+// Lógica para la imagen principal
+const mainImageSrc = post.imagen?.url.startsWith('http') 
+    ? post.imagen.url 
+    : STRAPI_URL + post.imagen?.url;
 ---
 
 <html lang="es">
@@ -73,7 +71,7 @@ const bloques = post.cuerpo || [];
             <div class="rounded-3xl overflow-hidden shadow-xl mb-12 max-h-[500px]">
                 {post.imagen ? (
                     <Image 
-                        src={STRAPI_URL + post.imagen.url} 
+                        src={mainImageSrc} 
                         alt={post.titulo} 
                         width={1200} 
                         height={600}
@@ -85,12 +83,12 @@ const bloques = post.cuerpo || [];
             </div>
         </div>
 
-        <!-- RENDERIZADOR DE DYNAMIC ZONE -->
+        <!-- CONTENIDO -->
         <article class="prose prose-blue prose-lg mx-auto text-gray-600">
             
             {bloques.map((bloque: any) => {
                 
-                // 1. PÁRRAFO (Rich Text)
+                // 1. PÁRRAFO
                 if (bloque.__component === 'blog-elementos.parrafo') {
                     return (
                         <div class="mb-8">
@@ -103,14 +101,17 @@ const bloques = post.cuerpo || [];
                 if (bloque.__component === 'blog-elementos.foto-articulo') {
                     const img = bloque.archivo_imagen;
                     if (!img) return null;
+                    
+                    // CORRECCIÓN URL
+                    const imgSrc = img.url.startsWith('http') ? img.url : STRAPI_URL + img.url;
+
                     return (
                         <figure class="my-12 not-prose">
                             <img 
-                                src={STRAPI_URL + img.url} 
+                                src={imgSrc} 
                                 alt={img.alternativeText || ''} 
                                 class="w-full rounded-2xl shadow-lg"
                             />
-                            {/* Si tuvieras pie de foto en strapi, iría aquí */}
                         </figure>
                     );
                 }
@@ -119,6 +120,10 @@ const bloques = post.cuerpo || [];
                 if (bloque.__component === 'blog-elementos.descarga-pdf') {
                     const file = bloque.archivo_pdf;
                     if (!file) return null;
+
+                    // CORRECCIÓN URL
+                    const fileUrl = file.url.startsWith('http') ? file.url : STRAPI_URL + file.url;
+
                     return (
                         <div class="my-10 p-6 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between not-prose hover:shadow-md transition-shadow">
                             <div class="flex items-center gap-4">
@@ -134,22 +139,19 @@ const bloques = post.cuerpo || [];
                                     </p>
                                 </div>
                             </div>
-                            <a href={STRAPI_URL + file.url} target="_blank" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-sm">
+                            <a href={fileUrl} target="_blank" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-sm">
                                 Descargar
                             </a>
                         </div>
                     );
                 }
-
                 return null;
             })}
-
         </article>
 
         <div class="mt-16 pt-8 border-t border-gray-100 text-center">
             <a href="/blog" class="inline-flex items-center text-gray-500 hover:text-blue-600 font-medium transition-colors">
-                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
-                Volver a Actualidad
+                ← Volver a Actualidad
             </a>
         </div>
 
