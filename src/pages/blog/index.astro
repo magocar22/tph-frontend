@@ -6,7 +6,6 @@ import Footer from '../../components/Footer.astro';
 import imgCabecera from '../../assets/fondo-salon.jpg';
 import fetchApi from '../../lib/strapi';
 
-// Pedimos las noticias a Strapi
 const posts = await fetchApi<any[]>({
   endpoint: 'noticias',
   query: {
@@ -15,27 +14,24 @@ const posts = await fetchApi<any[]>({
   },
 });
 
-const STRAPI_URL = "http://localhost:1337";
+// Importante: Leemos la URL del backend desde el entorno
+const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
 ---
 
 <html lang="es">
   <head>
-    <BaseHead title="Actualidad y Noticias | Tu Primer Hogar" description="Novedades, avances de obra y noticias corporativas." />
+    <BaseHead title="Actualidad | Tu Primer Hogar" description="Novedades corporativas." />
   </head>
   <body class="bg-gray-50 font-sans text-gray-800">
     
     <Navbar isTransparent={true} />
 
-    <!-- HERO -->
     <header class="relative h-[35vh] min-h-[300px] flex flex-col justify-center items-center bg-cover bg-center" style={`background-image: url('${imgCabecera.src}');`}>
         <div class="absolute inset-0 bg-blue-900/70"></div>
         <div class="relative z-10 text-center px-4 pt-16">
             <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
                 Actualidad
             </h1>
-            <p class="text-blue-100 text-lg mt-4 max-w-2xl mx-auto font-light">
-                El día a día de nuestra compañía y el avance de nuestros proyectos.
-            </p>
         </div>
     </header>
 
@@ -48,18 +44,29 @@ const STRAPI_URL = "http://localhost:1337";
         )}
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {posts.map((post) => (
-                // TARJETA: Mantenemos el 'hover:-translate-y-1' (sube un poquito), que es elegante.
+            {posts.map((post) => {
+                // --- LÓGICA INTELIGENTE DE IMAGEN ---
+                // Si hay imagen:
+                // ¿Empieza por 'http'? -> Es de Cloudinary, úsala tal cual.
+                // ¿No empieza por 'http'? -> Es local, ponle el dominio delante.
+                let imgSrc = null;
+                if (post.imagen) {
+                    imgSrc = post.imagen.url.startsWith('http') 
+                        ? post.imagen.url 
+                        : STRAPI_URL + post.imagen.url;
+                }
+                // ------------------------------------
+
+                return (
                 <a href={`/blog/${post.slug}`} class="group block bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden hover:-translate-y-1">
                     
-                    <!-- IMAGEN -->
                     <div class="h-56 overflow-hidden relative">
-                        {post.imagen ? (
-                            // CAMBIO AQUÍ: He quitado 'group-hover:scale-105' y las transiciones.
-                            // Ahora la imagen es estática, solo se mueve la tarjeta completa.
-                            <img 
-                                src={STRAPI_URL + post.imagen.url} 
+                        {imgSrc ? (
+                            <Image 
+                                src={imgSrc} 
                                 alt={post.titulo} 
+                                width={600}
+                                height={400}
                                 class="w-full h-full object-cover" 
                             />
                         ) : (
@@ -71,7 +78,6 @@ const STRAPI_URL = "http://localhost:1337";
                         </span>
                     </div>
                     
-                    <!-- TEXTOS -->
                     <div class="p-8">
                         <div class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">
                             {new Date(post.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
@@ -88,7 +94,7 @@ const STRAPI_URL = "http://localhost:1337";
                         </div>
                     </div>
                 </a>
-            ))}
+            )})}
         </div>
     </main>
 
