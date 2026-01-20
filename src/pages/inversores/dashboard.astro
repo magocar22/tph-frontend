@@ -3,12 +3,12 @@ import BaseHead from '../../components/BaseHead.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 
+// 1. URL DINÁMICA
+const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+
 // --- SEGURIDAD ---
 const jwt = Astro.cookies.get('jwt')?.value;
 if (!jwt) return Astro.redirect('/inversores');
-
-// 1. URL DINÁMICA
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
 
 // 2. PETICIÓN A LA URL CORRECTA
 const response = await fetch(`${STRAPI_URL}/api/users/me?populate[proyectos][populate]=documentos_privados`, {
@@ -18,17 +18,23 @@ const response = await fetch(`${STRAPI_URL}/api/users/me?populate[proyectos][pop
 if (!response.ok) return Astro.redirect('/api/logout');
 
 const usuario = await response.json();
-let misProyectos = usuario.proyectos || [];
+const proyectosCrudos = usuario.proyectos || [];
 
-// Filtro de duplicados
-misProyectos = Array.from(new Map(misProyectos.map((item: any) => [item.id, item])).values());
+// --- FILTRO ANTI-DUPLICADOS POR TÍTULO ---
+// Usamos el TÍTULO como clave única. 
+// Si hay dos proyectos con distinto ID pero mismo título, se fusionan en uno.
+const misProyectos = [
+    ...new Map(proyectosCrudos.map((item: any) => [item.titulo, item])).values()
+];
 
-// Función de estilos...
+// Función de estilos
 const getFileStyle = (ext) => {
     if (!ext) return 'bg-gray-50 text-gray-600';
-    if (ext.includes('pdf')) return 'bg-red-50 text-red-600';
-    if (ext.includes('xls') || ext.includes('csv')) return 'bg-green-50 text-green-600';
-    if (ext.includes('jpg') || ext.includes('png') || ext.includes('zip')) return 'bg-blue-50 text-blue-600';
+    const e = ext.toLowerCase();
+    if (e.includes('pdf')) return 'bg-red-50 text-red-600';
+    if (e.includes('xls') || e.includes('csv') || e.includes('sheet')) return 'bg-green-50 text-green-600';
+    if (e.includes('jpg') || e.includes('png') || e.includes('jpeg')) return 'bg-blue-50 text-blue-600';
+    if (e.includes('zip') || e.includes('rar')) return 'bg-yellow-50 text-yellow-600';
     return 'bg-gray-50 text-gray-600';
 };
 ---
@@ -43,98 +49,117 @@ const getFileStyle = (ext) => {
 
     <main class="max-w-5xl mx-auto px-4 py-12 min-h-[70vh]">
         
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4">
+        <!-- CABECERA -->
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4 border-b border-gray-200 pb-6">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Hola, {usuario.username}</h1>
-                <p class="text-gray-500 mt-1">Aquí tienes la documentación actualizada de tus inversiones.</p>
+                <p class="text-gray-500 mt-2">Aquí tienes la documentación actualizada de tus inversiones.</p>
             </div>
-            <a href="/api/logout" class="text-sm font-bold text-red-600 hover:bg-red-50 px-4 py-2 rounded-lg transition-colors border border-transparent hover:border-red-100">
+            <a href="/api/logout" class="group flex items-center px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-red-600 text-sm font-bold hover:bg-red-50 hover:border-red-200 transition-all shadow-sm">
+                <svg class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 Cerrar Sesión
             </a>
         </div>
 
         {misProyectos.length === 0 ? (
-            <div class="bg-white p-12 rounded-2xl border border-gray-200 text-center shadow-sm">
-                <p class="text-gray-500 mb-2">No tienes proyectos asignados actualmente.</p>
-                <p class="text-sm text-gray-400">Si crees que es un error, contacta con administración.</p>
+            <div class="bg-white p-16 rounded-3xl border border-dashed border-gray-300 text-center">
+                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 text-gray-400">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                </div>
+                <h3 class="text-lg font-bold text-gray-900">No hay proyectos asignados</h3>
+                <p class="text-gray-500 mt-2 max-w-md mx-auto">Actualmente no tienes inversiones activas vinculadas a tu cuenta. Si crees que es un error, contacta con tu gestor.</p>
             </div>
         ) : (
-            <div class="space-y-10">
+            <div class="space-y-12">
                 {misProyectos.map((proyecto: any) => (
                     
-                    <article class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden transition-shadow hover:shadow-md">
+                    <article class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden transition-all hover:shadow-md">
                         
+                        <!-- ENCABEZADO PROYECTO -->
                         <div class="p-6 md:p-8 border-b border-gray-100 bg-white">
-                            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
                                 <div>
-                                    <span class="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2 block">
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 uppercase tracking-wide mb-3">
                                         Proyecto de Inversión
                                     </span>
-                                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight">
+                                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-2">
                                         {proyecto.titulo}
                                     </h2>
                                     
                                     {proyecto.ubicacion && (
-                                        <div class="flex items-center text-gray-500 text-sm mt-3">
-                                            <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                        <div class="flex items-center text-gray-500 text-sm">
+                                            <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                                             {proyecto.ubicacion}
                                         </div>
                                     )}
                                 </div>
                                 
-                                <span class="px-4 py-1.5 bg-gray-100 text-gray-600 rounded-full text-xs font-bold uppercase self-start md:self-center whitespace-nowrap">
-                                    {proyecto.estado || 'Activo'}
-                                </span>
+                                <div class="flex items-center gap-2 self-start">
+                                    <span class={`px-4 py-1.5 rounded-full text-xs font-bold uppercase border 
+                                        ${proyecto.estado === 'Entregado' ? 'bg-green-50 text-green-700 border-green-200' : 
+                                          proyecto.estado === 'En construcción' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
+                                          'bg-gray-100 text-gray-600 border-gray-200'}`}>
+                                        {proyecto.estado || 'Activo'}
+                                    </span>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- ZONA DE DOCUMENTOS -->
                         <div class="bg-gray-50/50 p-6 md:p-8">
-                            <h3 class="text-sm font-bold text-gray-900 mb-6 flex items-center">
-                                Documentación Disponible
-                                <span class="ml-2 bg-gray-200 text-gray-600 py-0.5 px-2 rounded text-xs">
-                                    {proyecto.documentos_privados?.length || 0}
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-sm font-bold text-gray-900 flex items-center uppercase tracking-wide">
+                                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    Documentación Disponible
+                                </h3>
+                                <span class="bg-white border border-gray-200 text-gray-500 py-1 px-3 rounded-lg text-xs font-medium shadow-sm">
+                                    {proyecto.documentos_privados?.length || 0} Archivos
                                 </span>
-                            </h3>
+                            </div>
 
                             {proyecto.documentos_privados && proyecto.documentos_privados.length > 0 ? (
                                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                                     {proyecto.documentos_privados.map((doc: any) => {
                                         const iconStyle = getFileStyle(doc.ext);
+                                        const docUrl = doc.url.startsWith('http') ? doc.url : STRAPI_URL + doc.url;
+
                                         return (
-                                            <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-300 transition-colors group h-full">
+                                            <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all group h-full cursor-default">
                                                 <div class="flex items-center gap-4 overflow-hidden">
-                                                    <div class={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg ${iconStyle}`}>
-                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                    <div class={`w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-lg ${iconStyle} bg-opacity-20`}>
+                                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
                                                     </div>
                                                     
                                                     <div class="min-w-0 flex-1">
-                                                        <p class="font-bold text-gray-900 text-sm truncate" title={doc.name}>
+                                                        <p class="font-bold text-gray-900 text-sm truncate mb-1" title={doc.name}>
                                                             {doc.name}
                                                         </p>
-                                                        <p class="text-xs text-gray-400 flex items-center mt-0.5">
-                                                            {doc.ext?.replace('.', '').toUpperCase()} 
-                                                            <span class="mx-1.5">•</span> 
-                                                            {Math.round(doc.size)} KB
-                                                        </p>
+                                                        <div class="flex items-center text-xs text-gray-400">
+                                                            <span class="uppercase font-semibold tracking-wider">{doc.ext?.replace('.', '')}</span>
+                                                            <span class="mx-2">•</span> 
+                                                            <span>{Math.round(doc.size)} KB</span>
+                                                        </div>
                                                     </div>
                                                 </div>
 
                                                 <a 
-                                                    href={STRAPI_URL + doc.url} 
+                                                    href={docUrl} 
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    class="ml-2 p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                                    class="ml-3 p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                                     title="Descargar documento"
                                                 >
-                                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
                                                 </a>
                                             </div>
                                         );
                                     })}
                                 </div>
                             ) : (
-                                <div class="text-center py-10 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50">
-                                    <p class="text-gray-400 text-sm">No hay documentos disponibles en este momento.</p>
+                                <div class="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
+                                    <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    <p class="text-gray-500 text-sm font-medium">No hay documentación disponible.</p>
+                                    <p class="text-gray-400 text-xs mt-1">Vuelve a consultar más tarde.</p>
                                 </div>
                             )}
                         </div>
