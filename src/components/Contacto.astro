@@ -1,20 +1,17 @@
 ---
 // src/components/Contacto.astro
 
-// Recibimos props:
-// - simple: para el diseño compacto en sidebars
-// - tipo: 'cliente' (default) o 'inversor' para clasificar el lead
-const { simple = false, tipo = 'cliente' } = Astro.props;
+const { simple = false, tipo = 'Cliente' } = Astro.props; // 'Cliente' o 'Inversor'
 
-// Textos dinámicos según el tipo
-const textoBoton = tipo === 'inversor' ? "Solicitar Dossier" : "Solicitar información";
-const placeholderMensaje = tipo === 'inversor'
+// Textos visuales
+const textoBoton = tipo === 'Inversor' ? "Solicitar Dossier" : "Solicitar información";
+const placeholderMensaje = tipo === 'Inversor'
     ? "Estoy interesado en oportunidades de inversión..."
     : "Me gustaría saber más sobre cómo acceder a una vivienda...";
 
-
-// URL del Backend (Dinámica para producción/local)
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+// URL WP y ID del Formulario
+const WP_URL = "http://localhost/tph-backend"; 
+const FORM_ID = "25"; // <--- ¡¡PON AQUÍ EL ID QUE APUNTASTE ANTES!!
 ---
 
 <div class={simple ? "w-full" : "py-16 md:py-24 bg-blue-50"} id="contacto">
@@ -22,87 +19,59 @@ const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
     
     <div class={simple ? "" : "grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start"}>
       
-      <!-- COLUMNA IZQUIERDA (Texto ayuda) -->
-      {!simple && tipo !== 'inversor' && (
+      <!-- Texto Ayuda -->
+      {!simple && tipo !== 'Inversor' && (
         <div class="space-y-8">
              <div>
-                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
-                    ¿Tienes dudas? <br/>
-                    <span class="text-blue-600">Hablemos de tu futuro hogar.</span>
-                </h2>
+                <h2 class="text-3xl md:text-4xl font-bold text-gray-900 mb-4">¿Tienes dudas?</h2>
                 <p class="text-gray-600 text-lg leading-relaxed">
                     Nuestro equipo te explicará paso a paso cómo funciona el modelo sin entrada.
                 </p>
             </div>
-            <!-- Datos de contacto estáticos -->
-            <div class="space-y-6">
-                <div class="flex items-start">
-                    <div class="flex-shrink-0 text-blue-600">
-                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path></svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-gray-900 font-bold">952 777 500</p>
-                    </div>
-                </div>
-                <div class="flex items-start">
-                    <div class="flex-shrink-0 text-blue-600">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                    </div>
-                    <div class="ml-4">
-                        <p class="text-gray-900 font-bold">info@tuprimerhogar.es</p>
-                    </div>
-                </div>
-            </div>
+            <!-- Datos de contacto estáticos si quieres ponerlos aquí -->
         </div>
       )}
 
       <!-- FORMULARIO -->
       <div class={simple ? "" : "bg-white rounded-3xl shadow-xl p-8 md:p-10 border border-gray-100"}>
         
-        <!-- 
-            IMPORTANTE: Quitamos 'action' y 'method'. 
-            Dejamos que el JavaScript maneje el envío.
-        -->
-        <form id="form-contacto" class="space-y-4">
+        <form id="wp-contact-form" class="space-y-4">
           
-          <!-- Campo oculto para saber si es inversor o cliente -->
-          <input type="hidden" name="tipo_perfil" value={tipo}>
+          <!-- CAMPO OCULTO QUE ENVIAMOS A WP -->
+          <!-- El nombre 'profile-type' debe coincidir con el [hidden profile-type] de CF7 -->
+          <input type="hidden" name="profile-type" value={tipo}>
       
           <div>
-            <label for="nombre" class="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
-            <input type="text" id="nombre" name="nombre" required placeholder="Tu nombre" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none" />
+            <label class="block text-sm font-medium text-gray-700 mb-1">Nombre completo</label>
+            <input type="text" name="your-name" required placeholder="Tu nombre" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none" />
           </div>
       
           <div class={simple ? "grid grid-cols-1 gap-4" : "grid grid-cols-1 md:grid-cols-2 gap-6"}>
             <div>
-              <label for="email" class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-              <input type="email" id="email" name="email" required placeholder="tu@email.com" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <input type="email" name="your-email" required placeholder="tu@email.com" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none" />
             </div>
             <div>
-              <label for="telefono" class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
-              <input type="tel" id="telefono" name="telefono" required placeholder="600 00 00 00" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none" />
+              <label class="block text-sm font-medium text-gray-700 mb-1">Teléfono</label>
+              <input type="tel" name="your-phone" required placeholder="600 00 00 00" class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none" />
             </div>
           </div>
       
           <div>
-            <label for="mensaje" class="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
-            <textarea id="mensaje" name="mensaje" rows={simple ? "3" : "4"} required placeholder={placeholderMensaje} class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none resize-none"></textarea>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Mensaje</label>
+            <textarea name="your-message" rows={simple ? "3" : "4"} required placeholder={placeholderMensaje} class="w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-200 focus:border-blue-500 outline-none resize-none"></textarea>
           </div>
       
           <div class="flex items-start">
-            <div class="flex items-center h-5">
-              <input id="privacidad" name="privacidad" type="checkbox" required class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500" />
-            </div>
-            <div class="ml-3 text-xs text-gray-500">
-              Acepto la <a href="/politica-privacidad" target="_blank" class="text-blue-600 hover:underline">Política de Privacidad</a>.
-            </div>
+            <!-- Checkbox de aceptación (nombre 'acceptance' coincide con CF7) -->
+            <input type="checkbox" name="acceptance" value="1" required class="mt-1 w-4 h-4 text-blue-600 rounded focus:ring-blue-500" />
+            <span class="ml-2 text-xs text-gray-500">Acepto la <a href="/politica-privacidad" target="_blank" class="text-blue-600 hover:underline">Política de Privacidad</a>.</span>
           </div>
       
-          <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-blue-700 transition-colors shadow-md text-base disabled:opacity-50 disabled:cursor-not-allowed">
+          <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white font-bold py-3.5 px-6 rounded-xl hover:bg-blue-700 transition-colors shadow-md">
             {textoBoton}
           </button>
       
-          <!-- Mensaje de respuesta -->
           <div id="result" class="hidden text-center p-3 text-sm rounded-lg mt-2 font-medium"></div>
       
         </form>
@@ -112,71 +81,51 @@ const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
   </div>
 </div>
 
-<!-- SCRIPT DE ENVÍO A STRAPI -->
-<!-- Pasamos la variable STRAPI_URL al script para que sepa dónde enviar -->
-<script is:inline define:vars={{ STRAPI_URL }}>
-  const form = document.getElementById('form-contacto');
+<script is:inline define:vars={{ WP_URL, FORM_ID }}>
+  const form = document.getElementById('wp-contact-form');
   const result = document.getElementById('result');
   const btn = document.getElementById('btn-submit');
 
   if(form) {
       form.addEventListener('submit', async function(e) {
-        e.preventDefault(); // EVITA QUE LA PÁGINA SE RECARGUE
-
-        // 1. Recoger datos
-        const formData = new FormData(form);
-        const data = Object.fromEntries(formData);
+        e.preventDefault();
         
-        // 2. Estado de "Cargando"
+        const formData = new FormData(form);
+        
+        // Estado Enviando
         const textoOriginal = btn.innerHTML;
         btn.innerHTML = "Enviando...";
         btn.disabled = true;
         result.classList.add('hidden');
-        result.classList.remove('bg-green-100', 'text-green-700', 'bg-red-100', 'text-red-700');
 
         try {
-            // 3. ENVIAR A STRAPI
-            // La estructura debe ser { "data": { ...campos... } }
-            const payload = {
-                data: {
-                    nombre: data.nombre,
-                    email: data.email,
-                    telefono: data.telefono,
-                    mensaje: data.mensaje,
-                    tipo: data.tipo_perfil, // 'cliente' o 'inversor'
-                    atendido: false // Por defecto
-                }
-            };
-
-            const response = await fetch(`${STRAPI_URL}/api/leads`, {
+            // Endpoint mágico de Contact Form 7
+            const endpoint = `${WP_URL}/wp-json/contact-form-7/v1/contact-forms/${FORM_ID}/feedback`;
+            
+            const response = await fetch(endpoint, {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(payload)
+                body: formData // CF7 acepta FormData directamente
             });
 
-            if (response.ok) {
-                // ÉXITO
-                result.innerHTML = "¡Mensaje recibido! Nos pondremos en contacto contigo pronto.";
-                result.classList.remove('hidden');
+            const data = await response.json();
+
+            if (data.status === 'mail_sent') {
+                // Éxito
+                result.innerHTML = "¡Recibido! Gracias por tu interés.";
+                result.classList.remove('hidden', 'bg-red-100', 'text-red-700');
                 result.classList.add('bg-green-100', 'text-green-700');
                 form.reset();
             } else {
-                // ERROR DE STRAPI
-                const errorData = await response.json();
-                console.error("Error Strapi:", errorData);
-                throw new Error("Error al guardar el contacto.");
+                // Error de validación de WP
+                throw new Error(data.message || "Error al enviar");
             }
 
         } catch (error) {
-            // ERROR DE RED
             console.error(error);
-            result.innerHTML = "Hubo un problema al enviar. Por favor, inténtalo más tarde.";
+            result.innerHTML = "Hubo un error. Inténtalo más tarde.";
             result.classList.remove('hidden');
             result.classList.add('bg-red-100', 'text-red-700');
         } finally {
-            // RESTAURAR BOTÓN
             btn.innerHTML = textoOriginal;
             btn.disabled = false;
         }

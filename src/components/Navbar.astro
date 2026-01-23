@@ -31,7 +31,10 @@ const links = [
       
       <!-- LOGO -->
       <a href="/" class="flex items-center relative z-50" aria-label="Volver al inicio">
-        <div id="logo-container" class="transition-all duration-300">
+        <div id="logo-container" class:list={[
+                "transition-all duration-300",
+                !isTransparent ? "logo-blue" : "" 
+            ]}>
              <div 
                 id="logo-mask"
                 class="w-48 md:w-64 h-14 md:h-20"

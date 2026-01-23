@@ -4,18 +4,43 @@ import BaseHead from '../../components/BaseHead.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import imgCabecera from '../../assets/fondo-salon.jpg';
-import fetchApi from '../../lib/strapi';
 
-const posts = await fetchApi<any[]>({
-  endpoint: 'noticias',
-  query: {
-    populate: '*', 
-    sort: 'fecha:desc',
-  },
+// 1. IMPORTAMOS EL FETCH DE WORDPRESS
+import { fetchWP } from '../../lib/wordpress';
+
+// 2. PEDIMOS LAS NOTICIAS A WORDPRESS
+const wpPosts = await fetchWP<any[]>({
+  endpoint: 'posts', 
+  params: { 
+    per_page: '10', // Traer las últimas 10
+    _embed: 'true'  // OBLIGATORIO: Para que traiga imágenes y categorías
+  }
 });
 
-// Importante: Leemos la URL del backend desde el entorno
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+// 3. MAPEO DE DATOS (Traductor WP -> Tu Diseño)
+const posts = wpPosts.map(post => {
+    // A. Extraer imagen destacada si existe
+    let imagenUrl = null;
+    if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
+        imagenUrl = post._embedded['wp:featuredmedia'][0].source_url;
+    }
+    
+    // B. Extraer nombre de categoría (la primera que encuentre)
+    let nombreCategoria = "Actualidad";
+    if (post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0][0]) {
+        nombreCategoria = post._embedded['wp:term'][0][0].name;
+    }
+
+    return {
+        slug: post.slug,
+        titulo: post.title.rendered,
+        // Limpiamos las etiquetas HTML del extracto (ej: <p>Texto...</p>)
+        descripcion: post.excerpt.rendered.replace(/<[^>]*>?/gm, ''), 
+        fecha: new Date(post.date),
+        categoria: nombreCategoria,
+        imagen: imagenUrl // URL completa que viene de WP
+    };
+});
 ---
 
 <html lang="es">
@@ -32,6 +57,9 @@ const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
             <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
                 Actualidad
             </h1>
+            <p class="text-blue-100 text-lg mt-4 max-w-2xl mx-auto font-light">
+                Noticias y novedades desde WordPress
+            </p>
         </div>
     </header>
 
@@ -39,32 +67,20 @@ const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
         
         {posts.length === 0 && (
             <div class="text-center py-20 text-gray-500">
-                <p>No hay noticias publicadas aún.</p>
+                <p>No hay noticias publicadas aún en WordPress.</p>
             </div>
         )}
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {posts.map((post) => {
-                // --- LÓGICA INTELIGENTE DE IMAGEN ---
-
-                let imgSrc = null;
-                if (post.imagen) {
-                    imgSrc = post.imagen.url.startsWith('http') 
-                        ? post.imagen.url 
-                        : STRAPI_URL + post.imagen.url;
-                }
-                // ------------------------------------
-
-                return (
+            {posts.map((post) => (
                 <a href={`/blog/${post.slug}`} class="group block bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden hover:-translate-y-1">
                     
                     <div class="h-56 overflow-hidden relative">
-                        {imgSrc ? (
-                            <Image 
-                                src={imgSrc} 
+                        {post.imagen ? (
+                            // Usamos <img> estándar para evitar líos de dominios con Astro/WP local
+                            <img 
+                                src={post.imagen} 
                                 alt={post.titulo} 
-                                width={600}
-                                height={400}
                                 class="w-full h-full object-cover" 
                             />
                         ) : (
@@ -78,13 +94,13 @@ const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
                     
                     <div class="p-8">
                         <div class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">
-                            {new Date(post.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                            {post.fecha.toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
                         </div>
-                        <h2 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
-                            {post.titulo}
+                        <h2 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2" set:html={post.titulo}>
+                            {/* set:html es necesario porque a veces WP manda símbolos HTML en el título */}
                         </h2>
-                        <p class="text-gray-600 line-clamp-3 text-sm leading-relaxed">
-                            {post.descripcion}
+                        <p class="text-gray-600 line-clamp-3 text-sm leading-relaxed" set:html={post.descripcion}>
+                            {/* El extracto ya lo limpiamos arriba, pero por seguridad */}
                         </p>
                         <div class="mt-6 flex items-center text-blue-600 font-bold text-sm">
                             Leer noticia 
@@ -92,7 +108,7 @@ const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
                         </div>
                     </div>
                 </a>
-            )})}
+            ))}
         </div>
     </main>
 

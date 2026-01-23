@@ -3,56 +3,67 @@ import { Image } from 'astro:assets';
 import BaseHead from '../../components/BaseHead.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
-import fetchApi from '../../lib/strapi';
-import { BlocksRenderer } from '@strapi/blocks-react-renderer';
+import imgCabecera from '../../assets/fondo-salon.jpg';
 
+// 1. IMPORTAMOS LA CONEXIÓN A WORDPRESS
+import { fetchWP } from '../../lib/wordpress';
+
+// 2. ¡IMPORTANTE! FORZAMOS MODO ESTÁTICO PARA ESTA PÁGINA
+// Esto hace que getStaticPaths se ejecute y pase los datos (props) correctamente.
 export const prerender = true;
 
-// 1. URL DEL ENTORNO
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
-
+// 3. GENERAMOS LAS RUTAS
 export async function getStaticPaths() {
-  const posts = await fetchApi<any[]>({
-    endpoint: 'noticias',
-    query: {
-        populate: {
-            imagen: true,
-            cuerpo: {
-                on: {
-                    'blog-elementos.parrafo': { populate: '*' },
-                    'blog-elementos.foto-articulo': { populate: '*' },
-                    'blog-elementos.descarga-pdf': { populate: '*' }
-                }
-            }
-        }
+  const posts = await fetchWP<any[]>({
+    endpoint: 'posts',
+    params: { 
+        per_page: '100', 
+        _embed: 'true'
     }
   });
 
-  const noticiasValidas = posts.filter(post => post.slug && post.slug !== null);
-
-  return noticiasValidas.map(post => ({
+  return posts.map(post => ({
     params: { slug: post.slug }, 
     props: { post }, 
   }));
 }
 
+// 4. RECUPERAMOS DATOS CON SEGURIDAD
 const { post } = Astro.props;
-if (!post) return Astro.redirect('/blog');
 
-const bloques = post.cuerpo || []; 
+// Si por alguna razón post es undefined, redirigimos en vez de romper la web
+if (!post) {
+  return Astro.redirect('/blog');
+}
 
-// Lógica para la imagen principal
-const mainImageSrc = post.imagen?.url.startsWith('http') 
-    ? post.imagen.url 
-    : STRAPI_URL + post.imagen?.url;
+// 5. EXTRACCIÓN DE DATOS (Mapeo WP)
+const titulo = post.title.rendered;
+const contenido = post.content.rendered;
+const fecha = new Date(post.date).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' });
+
+// Imagen destacada
+let imagenUrl = null;
+if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
+    imagenUrl = post._embedded['wp:featuredmedia'][0].source_url;
+}
+
+// Categoría
+let categoria = "Actualidad";
+if (post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] && post._embedded['wp:term'][0][0]) {
+    categoria = post._embedded['wp:term'][0][0].name;
+}
 ---
 
 <html lang="es">
   <head>
-    <BaseHead title={post.titulo} description={post.descripcion} />
+    <BaseHead 
+        title={titulo} 
+        description={post.excerpt.rendered.replace(/<[^>]*>?/gm, '')} 
+    />
   </head>
   <body class="bg-white font-sans text-gray-800">
     
+    <!-- Navbar Blanco -->
     <div class="pt-20"> 
         <Navbar />
     </div>
@@ -62,96 +73,41 @@ const mainImageSrc = post.imagen?.url.startsWith('http')
         <!-- ENCABEZADO -->
         <div class="text-center mb-12">
             <span class="text-blue-600 font-bold tracking-widest text-xs uppercase mb-4 block">
-                {post.categoria} — {new Date(post.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
+                {categoria} — {fecha}
             </span>
-            <h1 class="text-3xl md:text-5xl font-bold text-gray-900 leading-tight mb-8">
-                {post.titulo}
-            </h1>
             
+            <!-- Título (con set:html por si WP mete caracteres especiales) -->
+            <h1 class="text-3xl md:text-5xl font-bold text-gray-900 leading-tight mb-8" set:html={titulo}></h1>
+            
+            <!-- IMAGEN PRINCIPAL -->
             <div class="rounded-3xl overflow-hidden shadow-xl mb-12 max-h-[500px]">
-                {post.imagen ? (
-                    <Image 
-                        src={mainImageSrc} 
-                        alt={post.titulo} 
-                        width={1200} 
-                        height={600}
+                {imagenUrl ? (
+                    <img 
+                        src={imagenUrl} 
+                        alt={titulo} 
                         class="w-full h-full object-cover" 
                     />
                 ) : (
-                    <div class="w-full h-64 bg-gray-200"></div>
+                    <img 
+                        src={imgCabecera.src} 
+                        alt="Imagen por defecto"
+                        class="w-full h-full object-cover opacity-50"
+                    />
                 )}
             </div>
         </div>
 
-        <!-- CONTENIDO -->
-        <article class="prose prose-blue prose-lg mx-auto text-gray-600">
-            
-            {bloques.map((bloque: any) => {
-                
-                // 1. PÁRRAFO
-                if (bloque.__component === 'blog-elementos.parrafo') {
-                    return (
-                        <div class="mb-8">
-                            <BlocksRenderer content={bloque.texto} />
-                        </div>
-                    );
-                }
+        <!-- CONTENIDO WORDPRESS -->
+        <article 
+            class="prose prose-blue prose-lg mx-auto text-gray-600 max-w-none" 
+            set:html={contenido}
+        />
 
-                // 2. FOTO ARTÍCULO
-                if (bloque.__component === 'blog-elementos.foto-articulo') {
-                    const img = bloque.archivo_imagen;
-                    if (!img) return null;
-                    
-                    // CORRECCIÓN URL
-                    const imgSrc = img.url.startsWith('http') ? img.url : STRAPI_URL + img.url;
-
-                    return (
-                        <figure class="my-12 not-prose">
-                            <img 
-                                src={imgSrc} 
-                                alt={img.alternativeText || ''} 
-                                class="w-full rounded-2xl shadow-lg"
-                            />
-                        </figure>
-                    );
-                }
-
-                // 3. DESCARGA PDF
-                if (bloque.__component === 'blog-elementos.descarga-pdf') {
-                    const file = bloque.archivo_pdf;
-                    if (!file) return null;
-
-                    // CORRECCIÓN URL
-                    const fileUrl = file.url.startsWith('http') ? file.url : STRAPI_URL + file.url;
-
-                    return (
-                        <div class="my-10 p-6 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between not-prose hover:shadow-md transition-shadow">
-                            <div class="flex items-center gap-4">
-                                <div class="bg-white p-3 rounded-lg text-red-500 shadow-sm shrink-0">
-                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                </div>
-                                <div>
-                                    <p class="font-bold text-gray-900 text-lg leading-tight mb-1">
-                                        {bloque.titulo_descarga || file.name}
-                                    </p>
-                                    <p class="text-xs text-gray-500 font-medium uppercase tracking-wide">
-                                        PDF • {Math.round(file.size)} KB
-                                    </p>
-                                </div>
-                            </div>
-                            <a href={fileUrl} target="_blank" class="bg-blue-600 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-blue-700 transition-colors shadow-sm">
-                                Descargar
-                            </a>
-                        </div>
-                    );
-                }
-                return null;
-            })}
-        </article>
-
+        <!-- BOTÓN VOLVER -->
         <div class="mt-16 pt-8 border-t border-gray-100 text-center">
             <a href="/blog" class="inline-flex items-center text-gray-500 hover:text-blue-600 font-medium transition-colors">
-                ← Volver a Actualidad
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Volver a Actualidad
             </a>
         </div>
 

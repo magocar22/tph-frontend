@@ -4,19 +4,57 @@ import BaseHead from '../../components/BaseHead.astro';
 import Navbar from '../../components/Navbar.astro';
 import Footer from '../../components/Footer.astro';
 import imgCabecera from '../../assets/fondo-salon.jpg';
-import fetchApi from '../../lib/strapi';
 
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+// IMPORTAMOS EL FETCH DE WORDPRESS
+import { fetchWP } from '../../lib/wordpress';
 
-const proyectos = await fetchApi<any[]>({
-  endpoint: 'proyectos',
-  query: { populate: '*' }
+// PEDIMOS LOS PROYECTOS
+const wpProyectos = await fetchWP<any[]>({
+  endpoint: 'proyectos', 
+  params: { 
+    per_page: '100',
+    _embed: 'true', // VITAL: Esto trae la imagen destacada de WP
+    acf_format: 'standard'
+  }
+});
+
+// MAPEO DE DATOS
+const proyectos = wpProyectos.map(p => {
+    const acf = p.acf || {};
+
+    // --- LÓGICA DE IMAGEN CORREGIDA ---
+    let imagenUrl = null;
+
+    // 1. Buscamos primero la Imagen Destacada NATIVA de WordPress
+    if (p._embedded && p._embedded['wp:featuredmedia'] && p._embedded['wp:featuredmedia'][0]) {
+        imagenUrl = p._embedded['wp:featuredmedia'][0].source_url;
+    }
+    
+    // 2. (Opcional) Si no hay nativa, miramos si quedó algo en ACF por seguridad
+    if (!imagenUrl && acf.imagen_principal) {
+        imagenUrl = typeof acf.imagen_principal === 'string' 
+            ? acf.imagen_principal 
+            : acf.imagen_principal.url;
+    }
+    // ----------------------------------
+
+    return {
+        slug: p.slug,
+        titulo: p.title.rendered,
+        ubicacion: acf.ubicacion || 'Ubicación no definida',
+        estado: acf.estado || 'Consultar',
+        descripcion_corta: acf.descripcion_corta || '',
+        imagen: imagenUrl
+    };
 });
 ---
 
 <html lang="es">
   <head>
-    <BaseHead title="Nuestros Proyectos | Tu Primer Hogar" description="Catálogo de promociones." />
+    <BaseHead 
+      title="Nuestros Proyectos | Tu Primer Hogar" 
+      description="Catálogo de promociones activas en WordPress." 
+    />
   </head>
   <body class="bg-gray-50 font-sans text-gray-800">
     
@@ -25,7 +63,12 @@ const proyectos = await fetchApi<any[]>({
     <header class="relative h-[35vh] min-h-[300px] flex flex-col items-center justify-center bg-cover bg-center" style={`background-image: url('${imgCabecera.src}');`}>
         <div class="absolute inset-0 bg-blue-900/70"></div>
         <div class="relative z-10 text-center px-4 mt-10">
-            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-lg">Proyectos en curso</h1>
+            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
+                Proyectos en curso
+            </h1>
+            <p class="text-blue-100 text-lg mt-4 max-w-2xl mx-auto font-light">
+                Descubre las promociones donde ya puedes acceder a tu vivienda sin entrada.
+            </p>
         </div>
     </header>
 
@@ -33,61 +76,61 @@ const proyectos = await fetchApi<any[]>({
         
         {proyectos.length === 0 && (
             <div class="text-center py-20">
-                <p class="text-gray-500 text-xl">Próximamente publicaremos nuevas promociones.</p>
+                <p class="text-gray-500 text-xl">No hay proyectos publicados en WordPress todavía.</p>
             </div>
         )}
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {proyectos.map((proyecto) => {
-                
-                // LÓGICA INTELIGENTE PARA CARGAR LA IMAGEN
-                let imgSrc = null;
-                if (proyecto.imagen_principal) {
-                    imgSrc = proyecto.imagen_principal.url.startsWith('http') 
-                        ? proyecto.imagen_principal.url 
-                        : STRAPI_URL + proyecto.imagen_principal.url;
-                }
-
-                return (
+            
+            {proyectos.map((proyecto) => (
                 <article class="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full hover:-translate-y-2">
                     
                     <div class="h-64 overflow-hidden relative">
-                        {imgSrc ? (
-                            <Image 
-                                src={imgSrc} 
+                        {proyecto.imagen ? (
+                            <img 
+                                src={proyecto.imagen} 
                                 alt={proyecto.titulo} 
-                                width={600}
-                                height={400}
                                 class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
                             />
                         ) : (
                             <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">Sin foto</div>
                         )}
                         
+                        <!-- BADGE DE ESTADO -->
                         <div class="absolute top-4 left-4">
-                            <span class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm bg-blue-600 text-white">
-                                {proyecto.estado || 'Consultar'}
+                            <span class={`
+                                px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm
+                                ${proyecto.estado === 'En comercialización' ? 'bg-blue-600 text-white' : ''}
+                                ${proyecto.estado === 'En construcción' ? 'bg-yellow-500 text-white' : ''}
+                                ${proyecto.estado === 'Entregado' ? 'bg-green-600 text-white' : ''}
+                                ${!['En comercialización', 'En construcción', 'Entregado'].includes(proyecto.estado) ? 'bg-gray-600 text-white' : ''}
+                            `}>
+                                {proyecto.estado}
                             </span>
                         </div>
                     </div>
                     
                     <div class="p-8 flex-1 flex flex-col">
+                        
                         <div class="flex items-center text-sm text-gray-500 mb-3">
                             <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
                             {proyecto.ubicacion}
                         </div>
-                        <h2 class="text-2xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">
-                            {proyecto.titulo}
-                        </h2>
+
+                        <!-- Título con set:html por si WP mete caracteres raros -->
+                        <h2 class="text-2xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors" set:html={proyecto.titulo}></h2>
+                        
                         <p class="text-gray-600 mb-8 line-clamp-3 flex-grow leading-relaxed">
                             {proyecto.descripcion_corta}
                         </p>
+                        
                         <a href={`/proyectos/${proyecto.slug}`} class="block text-center w-full bg-gray-50 hover:bg-blue-600 text-gray-900 hover:text-white font-bold py-4 rounded-xl transition-all duration-300">
                             Ver detalles y planos
                         </a>
                     </div>
                 </article>
-            )})}
+            ))}
+
         </div>
     </main>
 

@@ -2,56 +2,41 @@
 import BaseHead from '../components/BaseHead.astro';
 import Navbar from '../components/Navbar.astro';
 import Footer from '../components/Footer.astro';
-import fetchApi from '../lib/strapi';
-import { Image } from 'astro:assets';
+import { fetchWP } from '../lib/wordpress';
+import imgHeader from '../assets/fondo-salon.jpg'; // Tu imagen
 
-// --- CAMBIA ESTO POR TU IMAGEN DE CABECERA ---
-import imgHeader from '../assets/subiendo-escaleras.jpg'; 
-// -------------------------------------------
+// 1. UNA SOLA LLAMADA A LA API
+// Pedimos 'documentos' (asegúrate de que el slug en CPT UI sea 'documentos')
+// Pedimos 100 para asegurar que traemos todo el histórico
+const todosLosDocs = await fetchWP<any[]>({
+  endpoint: 'documentos',
+  params: { 
+    per_page: '100', 
+    acf_format: 'standard',
+    orderby: 'date',
+    order: 'desc' // Lo más nuevo primero
+  }
+});
 
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+// 2. CLASIFICACIÓN (Javascript)
+// Separamos los documentos en 3 montones según lo que el cliente eligió en el desplegable ACF
+const docsGeneral = todosLosDocs.filter(doc => doc.acf.tipo_documento === 'general');
+const docsFinanciera = todosLosDocs.filter(doc => doc.acf.tipo_documento === 'financiera');
+const hechosRelevantes = todosLosDocs.filter(doc => doc.acf.tipo_documento === 'hecho_relevante');
 
-// 1. DATOS PÁGINA GENERAL
-let paginaData = null;
-try {
-    const response = await fetchApi<any>({
-        endpoint: 'pagina-accionista',
-        query: {
-            populate: {
-                documentos_generales: { populate: '*' },
-                documentos_financieros: { populate: '*' }
-            }
-        }
-    });
-    paginaData = response;
-} catch (e) {
-    console.error("Aún no hay datos en Pagina Accionistas");
-}
-
-// 2. HECHOS RELEVANTES
-let hechosRelevantes = [];
-try {
-    hechosRelevantes = await fetchApi<any[]>({
-        endpoint: 'hecho-relevantes',
-        query: {
-            sort: 'fecha:desc',
-            populate: '*'
-        }
-    });
-} catch (e) {
-    console.error("No hay hechos relevantes");
-}
-
-// Helpers
-const getFileUrl = (file) => file?.url ? (file.url.startsWith('http') ? file.url : STRAPI_URL + file.url) : '#';
-const getFileSize = (kbytes) => kbytes > 1000 ? `${(kbytes/1000).toFixed(2)} MB` : `${Math.round(kbytes)} KB`;
+// Helper visual
+const getFileLabel = (url) => {
+    if(!url) return '';
+    const ext = url.split('.').pop().toUpperCase();
+    return `${ext} • DESCARGAR`;
+};
 ---
 
 <html lang="es" class="scroll-smooth">
   <head>
     <BaseHead 
       title="Inversores y Accionistas | Tu Primer Hogar" 
-      description="Información corporativa, financiera y hechos relevantes para accionistas." 
+      description="Información corporativa, financiera y hechos relevantes." 
     />
   </head>
   <body class="bg-gray-50 font-sans text-gray-800">
@@ -66,7 +51,7 @@ const getFileSize = (kbytes) => kbytes > 1000 ? `${(kbytes/1000).toFixed(2)} MB`
                 Inversores y Accionistas
             </h1>
             <p class="text-blue-100 text-lg mt-4 max-w-2xl mx-auto font-light">
-                Compromiso con la transparencia. Información regulatoria y financiera.
+                Transparencia y rigor informativo.
             </p>
         </div>
     </header>
@@ -79,46 +64,34 @@ const getFileSize = (kbytes) => kbytes > 1000 ? `${(kbytes/1000).toFixed(2)} MB`
             <aside class="lg:w-1/4">
                 <nav class="sticky top-28 bg-white rounded-2xl shadow-sm border border-gray-100 p-2 overflow-hidden">
                     <ul class="flex flex-col">
-                        <li>
-                            <a href="#info-general" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
-                                Información General
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#info-financiera" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
-                                Información Financiera
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#hechos-relevantes" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
-                                Hechos Relevantes
-                            </a>
-                        </li>
+                        <li><a href="#info-general" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">Información General</a></li>
+                        <li><a href="#info-financiera" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">Información Financiera</a></li>
+                        <li><a href="#hechos-relevantes" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">Hechos Relevantes</a></li>
                     </ul>
                 </nav>
             </aside>
 
-            <!-- CONTENIDO PRINCIPAL -->
+            <!-- CONTENIDO -->
             <div class="lg:w-3/4 space-y-20">
                 
-                <!-- 1. INFORMACIÓN GENERAL -->
+                <!-- 1. GENERAL -->
                 <section id="info-general" class="scroll-mt-28">
                     <h2 class="text-2xl font-bold text-gray-900 mb-8 border-b border-gray-200 pb-4">Información General</h2>
-                    
                     <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-10 shadow-sm">
-                        {paginaData?.documentos_generales?.map((doc) => (
+                        {docsGeneral.map((doc) => (
                             <div class="flex items-center justify-between p-5 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors gap-4">
                                 <div class="flex items-center gap-4 overflow-hidden">
                                     <div class="bg-blue-50 p-2.5 rounded-xl text-blue-600 shrink-0">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="font-bold text-gray-900 truncate">{doc.titulo}</p>
-                                        {doc.archivo && <p class="text-xs text-gray-500 uppercase">{doc.archivo.ext.replace('.','')} • {getFileSize(doc.archivo.size)}</p>}
+                                        <p class="font-bold text-gray-900 truncate">{doc.title.rendered}</p>
+                                        <!-- Aquí NO mostramos fecha, solo subtítulo si hay -->
+                                        {doc.acf.subtitulo && <p class="text-xs text-gray-500 uppercase">{doc.acf.subtitulo}</p>}
                                     </div>
                                 </div>
-                                {doc.archivo && (
-                                    <a href={getFileUrl(doc.archivo)} target="_blank" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+                                {doc.acf.archivo && (
+                                    <a href={doc.acf.archivo} target="_blank" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                         <span class="hidden sm:inline">Ver Documento</span>
                                         <span class="sm:hidden">Ver</span>
@@ -126,35 +99,31 @@ const getFileSize = (kbytes) => kbytes > 1000 ? `${(kbytes/1000).toFixed(2)} MB`
                                 )}
                             </div>
                         ))}
-                        
-                        {!paginaData?.documentos_generales?.length && (
-                            <p class="p-6 text-gray-500 italic text-sm">No hay documentación general disponible.</p>
-                        )}
+                        {!docsGeneral.length && <p class="p-6 text-gray-500 italic text-sm">No hay documentos disponibles.</p>}
                     </div>
                 </section>
 
-                <!-- 2. INFORMACIÓN FINANCIERA -->
+                <!-- 2. FINANCIERA -->
                 <section id="info-financiera" class="scroll-mt-28">
                     <h2 class="text-2xl font-bold text-gray-900 mb-8 border-b border-gray-200 pb-4">Información Financiera</h2>
-                    
                     <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-10 shadow-sm">
-                        {paginaData?.documentos_financieros?.map((doc) => (
+                        {docsFinanciera.map((doc) => (
                             <div class="flex items-center justify-between p-5 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors gap-4">
                                 <div class="flex items-center gap-4 overflow-hidden">
                                     <div class="bg-green-50 p-2.5 rounded-xl text-green-600 shrink-0">
                                         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
                                     </div>
                                     <div class="min-w-0">
-                                        <p class="font-bold text-gray-900 truncate">{doc.titulo}</p>
+                                        <p class="font-bold text-gray-900 truncate">{doc.title.rendered}</p>
                                         <p class="text-xs text-gray-500 uppercase">
-                                            {doc.subtitulo ? <span class="font-semibold text-gray-600">{doc.subtitulo}</span> : ''}
-                                            {doc.subtitulo && doc.archivo ? ' • ' : ''}
-                                            {doc.archivo && <span>{doc.archivo.ext.replace('.','')} • {getFileSize(doc.archivo.size)}</span>}
+                                            {doc.acf.subtitulo ? <span class="font-semibold text-gray-600">{doc.acf.subtitulo}</span> : ''}
+                                            {doc.acf.subtitulo ? ' • ' : ''}
+                                            {getFileLabel(doc.acf.archivo)}
                                         </p>
                                     </div>
                                 </div>
-                                {doc.archivo && (
-                                    <a href={getFileUrl(doc.archivo)} target="_blank" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+                                {doc.acf.archivo && (
+                                    <a href={doc.acf.archivo} target="_blank" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                         <span class="hidden sm:inline">Ver Documento</span>
                                         <span class="sm:hidden">Ver</span>
@@ -162,14 +131,11 @@ const getFileSize = (kbytes) => kbytes > 1000 ? `${(kbytes/1000).toFixed(2)} MB`
                                 )}
                             </div>
                         ))}
-
-                        {!paginaData?.documentos_financieros?.length && (
-                            <p class="p-6 text-gray-500 italic text-sm">No hay información financiera disponible.</p>
-                        )}
+                        {!docsFinanciera.length && <p class="p-6 text-gray-500 italic text-sm">No hay información financiera disponible.</p>}
                     </div>
                 </section>
 
-                <!-- 3. HECHOS RELEVANTES -->
+                <!-- 3. HECHOS RELEVANTES (Estilo Distinto con Fecha) -->
                 <section id="hechos-relevantes" class="scroll-mt-28">
                     <h2 class="text-2xl font-bold text-gray-900 mb-8 border-b border-gray-200 pb-4">Hechos Relevantes</h2>
                     
@@ -180,25 +146,21 @@ const getFileSize = (kbytes) => kbytes > 1000 ? `${(kbytes/1000).toFixed(2)} MB`
                                     <div class="flex items-center gap-3 mb-1">
                                         <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded border border-gray-200">HR</span>
                                         <span class="text-sm text-gray-500 font-medium">
-                                            {new Date(hr.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
+                                            {/* Aquí SÍ mostramos la fecha, vital para BME */}
+                                            {new Date(hr.date).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
                                         </span>
                                     </div>
-                                    <h3 class="text-lg font-bold text-gray-900">{hr.titulo}</h3>
+                                    <h3 class="text-lg font-bold text-gray-900">{hr.title.rendered}</h3>
                                 </div>
-                                {hr.archivo && (
-                                    <a href={getFileUrl(hr.archivo)} target="_blank" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
+                                {hr.acf.archivo && (
+                                    <a href={hr.acf.archivo} target="_blank" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
                                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                                         <span class="inline">Ver Documento</span>
                                     </a>
                                 )}
                             </div>
                         ))}
-                        
-                        {hechosRelevantes.length === 0 && (
-                            <div class="text-center py-10 border-2 border-dashed border-gray-200 rounded-2xl">
-                                <p class="text-gray-400">No hay hechos relevantes publicados.</p>
-                            </div>
-                        )}
+                        {!hechosRelevantes.length && <div class="text-center py-10 border-2 border-dashed border-gray-200 rounded-2xl"><p class="text-gray-400">No hay hechos relevantes publicados.</p></div>}
                     </div>
                 </section>
 
