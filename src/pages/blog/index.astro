@@ -23,7 +23,7 @@ const posts = wpPosts.map(post => {
     // A. Extraer imagen destacada si existe
     let imagenUrl = null;
     if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
-        imagenUrl = post._embedded['wp:featuredmedia'][0].source_url;
+        imagenUrl = post._embedded['wp:featuredmedia'][0].source_url.replace('http:', 'https:');
     }
     
     // B. Extraer nombre de categoría (la primera que encuentre)

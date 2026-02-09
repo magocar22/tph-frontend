@@ -49,7 +49,7 @@ if (post._embedded && post._embedded['wp:term'] && post._embedded['wp:term'][0] 
 // Imagen destacada (para el cuerpo de la noticia)
 let imagenUrl = null;
 if (post._embedded && post._embedded['wp:featuredmedia'] && post._embedded['wp:featuredmedia'][0]) {
-    imagenUrl = post._embedded['wp:featuredmedia'][0].source_url;
+    imagenUrl = post._embedded['wp:featuredmedia'][0].source_url.replace('http:', 'https:');
 }
 
 // ============================================================
