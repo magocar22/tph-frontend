@@ -1,197 +1,128 @@
 ---
+// src/pages/proyectos/[slug].astro
 import { Image } from 'astro:assets';
-import BaseHead from '../../components/BaseHead.astro';
-import Footer from '../../components/Footer.astro';
+import Layout from '../../layouts/Layout.astro';
 import ContactoForm from '../../components/Contacto.astro';
-import fetchApi from '../../lib/strapi';
-import { BlocksRenderer } from '@strapi/blocks-react-renderer';
-import React from 'react';
+import { fetchWP } from '../../lib/wordpress';
+import { sanitizeWPHtml, sanitizeWPText } from "../../lib/sanitize";
 
 export const prerender = true;
 
-// 1. URL DEL ENTORNO
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
-
 export async function getStaticPaths() {
-  const proyectos = await fetchApi<any[]>({
-    endpoint: 'proyectos',
-    query: {
-        populate: {
-            imagen_principal: true,
-            cuerpo: {
-                on: {
-                    'blog-elementos.parrafo': { populate: '*' },
-                    'blog-elementos.foto-articulo': { populate: '*' },
-                    'blog-elementos.descarga-pdf': { populate: '*' }
-                }
-            }
-        }
-    }
-  });
-
-  const validos = proyectos.filter(p => p.slug && p.slug !== null);
-
-  return validos.map(proyecto => ({
-    params: { slug: proyecto.slug }, 
-    props: { proyecto }, 
-  }));
+    try {
+        const proyectos = await fetchWP<any[]>({
+            endpoint: 'proyectos',
+            params: { per_page: '100', _embed: 'true' }
+        });
+        return proyectos.map(proyecto => ({
+            params: { slug: proyecto.slug }, 
+            props: { proyecto }, 
+        }));
+    } catch (e) { return []; }
 }
 
 const { proyecto } = Astro.props;
 if (!proyecto) return Astro.redirect('/proyectos');
 
-const bloques = proyecto.cuerpo || [];
+const acf = proyecto.acf || {};
+const tituloProyecto = sanitizeWPText(proyecto.title?.rendered);
+const contenidoHtml = sanitizeWPHtml(proyecto.content.rendered);
+const imagenCabecera = proyecto._embedded?.['wp:featuredmedia']?.[0]?.source_url || null;
 
-// Renderizador personalizado para fotos dentro de Rich Text (Si las hubiera)
-const renderizadorPersonalizado = {
-  image: ({ image }) => {
-    if (!image.url) return null;
-    const src = image.url.startsWith('http') ? image.url : STRAPI_URL + image.url;
-    return React.createElement('img', {
-      src: src,
-      alt: image.alternativeText || '',
-      className: 'w-full h-auto rounded-2xl shadow-md my-10 border border-gray-100',
-    });
-  }
+// SEO
+const yoast = proyecto.yoast_head_json;
+const seoTitle = yoast?.title || tituloProyecto;
+const cleanExcerpt = (proyecto.excerpt?.rendered || "").replace(/<[^>]*>?/gm, '').trim(); 
+const cleanContent = (proyecto.content?.rendered || "").replace(/<[^>]*>?/gm, '').replace(/\s+/g, ' ').trim();
+const buildFallbackDescription = (text: string, max = 160) => {
+  if (!text) return "";
+  if (text.length <= max) return text;
+  const sliced = text.slice(0, max + 1);
+  const lastSpace = sliced.lastIndexOf(" ");
+  return (lastSpace > 80 ? sliced.slice(0, lastSpace) : sliced.slice(0, max)).trim();
 };
-
-// URL Imagen Principal
-const mainImageSrc = proyecto.imagen_principal?.url.startsWith('http') 
-    ? proyecto.imagen_principal.url 
-    : STRAPI_URL + proyecto.imagen_principal?.url;
+const seoDescription = yoast?.description || acf.descripcion_corta || cleanExcerpt || buildFallbackDescription(cleanContent) || "Descubre el proyecto y solicita informacion en Tu Primer Hogar.";
+const seoImage = yoast?.og_image?.[0]?.url || imagenCabecera;
 ---
 
-<html lang="es">
-  <head>
-    <BaseHead title={`${proyecto.titulo} | Proyecto`} description={proyecto.descripcion_corta} />
-  </head>
-  <body class="bg-gray-50 font-sans text-gray-800">
-    
-    <!-- HEADER -->
-    <header class="relative h-[50vh] min-h-[400px] flex items-end">
-        {proyecto.imagen_principal ? (
+<Layout
+    title={seoTitle}
+    description={seoDescription}
+    image={seoImage}
+    jsonLd={yoast?.schema} 
+    navbarTransparent={true}
+    showNavbar={false} // Mantener diseño inmersivo sin Navbar
+>
+    <!-- HEADER / HERO -->
+    <header class="relative h-[60vh] min-h-[500px] flex items-end overflow-hidden">
+        {imagenCabecera ? (
             <Image 
-                src={mainImageSrc} 
-                alt={proyecto.titulo} 
+                src={imagenCabecera} 
+                alt={tituloProyecto}
+                inferSize={true}
                 width={1920}
                 height={1080}
-                class="absolute inset-0 w-full h-full object-cover" 
+                format="webp"
+                class="absolute inset-0 w-full h-full object-cover z-0"
+                loading="eager"
+                fetchpriority="high"
             />
         ) : (
-            <div class="absolute inset-0 bg-blue-900"></div>
+            <div class="absolute inset-0 bg-blue-900 z-0"></div>
         )}
         
-        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent z-10"></div>
         
-        <div class="absolute top-0 w-full p-6 z-20">
-             <a href="/proyectos" class="text-white font-bold flex items-center gap-2 hover:underline bg-black/20 px-4 py-2 rounded-full backdrop-blur-md w-fit">
-                ← Volver al listado
-             </a>
+        <!-- Botón Volver Manual -->
+        <div class="absolute top-12 left-0 w-full px-4 sm:px-6 lg:px-8 z-30">
+            <a href="/proyectos" class="inline-flex items-center text-white font-medium bg-black/20 backdrop-blur-md px-4 py-2 rounded-full border border-white/20 hover:bg-black/40 transition-all">
+                <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
+                Volver al listado
+            </a>
         </div>
 
-        <div class="relative z-10 p-8 md:p-12 max-w-7xl mx-auto w-full">
-            <span class="bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold mb-4 inline-block shadow-lg">
-                {proyecto.estado}
+        <div class="relative z-20 p-8 md:p-12 max-w-7xl mx-auto w-full">
+            <span class="bg-blue-600 text-white px-4 py-1.5 rounded-full text-xs font-bold uppercase mb-4 inline-block shadow-lg">
+                {acf.estado || 'En Comercialización'}
             </span>
-            <h1 class="text-4xl md:text-6xl font-bold text-white mb-2 drop-shadow-md">{proyecto.titulo}</h1>
-            <p class="text-xl text-gray-200 flex items-center">
-                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                {proyecto.ubicacion}
+            <h1 class="text-4xl md:text-6xl font-bold text-white mb-4 drop-shadow-lg">{tituloProyecto}</h1>
+            <p class="text-lg text-gray-200 flex items-center">
+                <svg class="w-5 h-5 mr-2 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                {acf.ubicacion || 'Ubicación Consultar'}
             </p>
         </div>
     </header>
 
-    <main class="max-w-7xl mx-auto px-4 py-12 grid grid-cols-1 lg:grid-cols-3 gap-12">
-        
-        <!-- INFORMACIÓN -->
-        <div class="lg:col-span-2">
-            <div class="bg-white p-8 md:p-10 rounded-3xl shadow-sm border border-gray-100">
-                
-                <article class="prose prose-blue prose-lg max-w-none text-gray-600">
-                    {bloques.map((bloque: any) => {
-                        
-                        // 1. PÁRRAFO
-                        if (bloque.__component === 'blog-elementos.parrafo') {
-                            return (
-                                <div class="mb-6">
-                                    <BlocksRenderer 
-                                        content={bloque.texto} 
-                                        blocks={renderizadorPersonalizado}
-                                    />
-                                </div>
-                            );
-                        }
-
-                        // 2. FOTO
-                        if (bloque.__component === 'blog-elementos.foto-articulo') {
-                            const img = bloque.archivo_imagen;
-                            if (!img) return null;
-                            const imgSrc = img.url.startsWith('http') ? img.url : STRAPI_URL + img.url;
-
-                            return (
-                                <figure class="my-10 not-prose">
-                                    <img 
-                                        src={imgSrc} 
-                                        alt={img.alternativeText || 'Imagen'} 
-                                        class="w-full rounded-2xl shadow-md border border-gray-100"
-                                    />
-                                </figure>
-                            );
-                        }
-
-                        // 3. PDF
-                        if (bloque.__component === 'blog-elementos.descarga-pdf') {
-                            const file = bloque.archivo_pdf;
-                            if (!file) return null;
-                            const fileUrl = file.url.startsWith('http') ? file.url : STRAPI_URL + file.url;
-
-                            return (
-                                <div class="my-8 p-5 bg-blue-50 rounded-xl border border-blue-100 flex items-center justify-between not-prose hover:shadow-md transition-shadow">
-                                    <div class="flex items-center gap-3">
-                                        <div class="bg-white p-2.5 rounded-lg text-red-500 shadow-sm shrink-0">
-                                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                        </div>
-                                        <div>
-                                            <p class="font-bold text-gray-900 text-base leading-tight">
-                                                {bloque.titulo_descarga || file.name}
-                                            </p>
-                                            <p class="text-xs text-gray-500 uppercase tracking-wide">
-                                                PDF • {Math.round(file.size)} KB
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <a href={fileUrl} target="_blank" class="bg-blue-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-blue-700 transition-colors">
-                                        Descargar
-                                    </a>
-                                </div>
-                            );
-                        }
-                        return null;
-                    })}
-                </article>
-
+    <main class="max-w-7xl mx-auto px-4 py-12 md:py-16 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div class="lg:col-span-8 space-y-12">
+            <div class="bg-white p-6 md:p-10 rounded-3xl shadow-sm border border-gray-100">
+                <article class="prose prose-blue prose-lg max-w-none text-gray-600" set:html={contenidoHtml} />
             </div>
-        </div>
 
-        <!-- CONTACTO -->
-        <div class="lg:col-span-1">
-            <div class="sticky top-8">
-                <div class="bg-blue-600 text-white p-6 rounded-t-3xl shadow-lg relative overflow-hidden">
-                    <div class="relative z-10">
-                        <h3 class="text-xl font-bold">¿Te interesa este proyecto?</h3>
-                        <p class="text-blue-100 text-sm mt-1">Solicita el dossier completo de {proyecto.titulo}.</p>
+            {acf.galeria && acf.galeria.length > 0 && (
+                <div>
+                    <h3 class="text-2xl font-bold mb-8 text-gray-900 border-l-4 border-blue-600 pl-4">Galería</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                        {acf.galeria.map((img: any) => (
+                            <div class="rounded-2xl overflow-hidden shadow-md aspect-video bg-gray-100">
+                                <Image src={img.url} alt={img.alt || 'Galería'} inferSize={true} width={800} format="webp" class="w-full h-full object-cover" loading="lazy" />
+                            </div>
+                        ))}
                     </div>
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2"></div>
                 </div>
-                
-                <div class="bg-white p-6 rounded-b-3xl shadow-xl border border-gray-100">
-                    <ContactoForm simple={true} />
-                </div>
-            </div>
+            )}
         </div>
 
+        <aside class="lg:col-span-4">
+            <div class="sticky top-28 bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+                <div class="bg-blue-600 p-6 text-white">
+                    <h3 class="text-xl font-bold">Solicita Información</h3>
+                    <p class="text-blue-100 text-sm mt-1">Recibe el dossier detallado.</p>
+                </div>
+                <div class="p-6">
+                    <ContactoForm simple={true} asunto={`Interés en: ${tituloProyecto}`} />
+                </div>
+            </div>
+        </aside>
     </main>
-
-    <Footer />
-  </body>
-</html>
+</Layout>

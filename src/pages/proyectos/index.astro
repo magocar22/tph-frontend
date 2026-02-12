@@ -1,96 +1,120 @@
 ---
-import { Image } from 'astro:assets';
-import BaseHead from '../../components/BaseHead.astro';
-import Navbar from '../../components/Navbar.astro';
-import Footer from '../../components/Footer.astro';
-import imgCabecera from '../../assets/fondo-salon.jpg';
-import fetchApi from '../../lib/strapi';
+// src/pages/proyectos/index.astro
+import Layout from "../../layouts/Layout.astro";
+import { Image } from "astro:assets";
+import PageHeader from "../../components/PageHeader.astro";
+import imgCabecera from "../../assets/proyectos-tph.webp";
+import NoDisponible from "../../components/NoDisponible.astro";
+import { fetchWP } from "../../lib/wordpress";
+import { sanitizeWPText } from "../../lib/sanitize";
 
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+let wpProyectos: any[] = [];
+let wpAvailable = true;
 
-const proyectos = await fetchApi<any[]>({
-  endpoint: 'proyectos',
-  query: { populate: '*' }
-});
+try {
+  wpProyectos = await fetchWP<any[]>({
+    endpoint: "proyectos",
+    params: {
+      per_page: "100",
+      _embed: "true",
+      acf_format: "standard",
+    },
+  });
+} catch (err) {
+  console.error("[/proyectos] WP no disponible:", err);
+  wpAvailable = false;
+}
+
+const proyectos = wpAvailable ? wpProyectos.map((p) => {
+  const acf = p?.acf || {};
+  let imagenUrl = p?._embedded?.["wp:featuredmedia"]?.[0]?.source_url || 
+                  (typeof acf.imagen_principal === 'string' ? acf.imagen_principal : acf.imagen_principal?.url) || 
+                  null;
+
+  return {
+    slug: p.slug,
+    titulo: sanitizeWPText(p?.title?.rendered ?? "Proyecto"),
+    ubicacion: acf.ubicacion || "Ubicación no definida",
+    estado: acf.estado || "Consultar",
+    descripcion_corta: acf.descripcion_corta || "",
+    imagen: imagenUrl,
+  };
+}) : [];
 ---
 
-<html lang="es">
-  <head>
-    <BaseHead title="Nuestros Proyectos | Tu Primer Hogar" description="Catálogo de promociones." />
-  </head>
-  <body class="bg-gray-50 font-sans text-gray-800">
-    
-    <Navbar isTransparent={true} />
+<Layout
+  title="Nuestros Proyectos | Tu Primer Hogar"
+  description="Descubre nuestras promociones activas y accede a tu vivienda con nuestro modelo de alquiler con derecho a compra."
+  navbarTransparent={true}
+>
+  <!-- HERO SECTION -->
+  <PageHeader
+    backgroundImage={imgCabecera}
+    title="Proyectos en curso"
+    subtitle="Descubre las promociones donde ya puedes acceder a tu vivienda sin pagar entrada."
+    classes="h-[40vh] min-h-[300px] pt-16"
+    overlayClasses="bg-blue-900/70"
+  />
 
-    <header class="relative h-[35vh] min-h-[300px] flex flex-col items-center justify-center bg-cover bg-center" style={`background-image: url('${imgCabecera.src}');`}>
-        <div class="absolute inset-0 bg-blue-900/70"></div>
-        <div class="relative z-10 text-center px-4 mt-10">
-            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-lg">Proyectos en curso</h1>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    {wpAvailable ? (
+      <>
         {proyectos.length === 0 && (
-            <div class="text-center py-20">
-                <p class="text-gray-500 text-xl">Próximamente publicaremos nuevas promociones.</p>
-            </div>
+          <div class="text-center py-20 text-gray-500 text-xl">
+            No hay proyectos publicados todavía.
+          </div>
         )}
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {proyectos.map((proyecto) => {
-                
-                // LÓGICA INTELIGENTE PARA CARGAR LA IMAGEN
-                let imgSrc = null;
-                if (proyecto.imagen_principal) {
-                    imgSrc = proyecto.imagen_principal.url.startsWith('http') 
-                        ? proyecto.imagen_principal.url 
-                        : STRAPI_URL + proyecto.imagen_principal.url;
-                }
+          {proyectos.map((proyecto) => (
+            <article class="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full hover:-translate-y-2">
+              <div class="h-64 overflow-hidden relative bg-gray-100">
+                {proyecto.imagen ? (
+                  <Image
+                    src={proyecto.imagen}
+                    alt={proyecto.titulo}
+                    inferSize={true}
+                    width={600}
+                    height={400}
+                    format="webp"
+                    class="w-full h-full object-cover transition-transform duration-700"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div class="w-full h-full flex items-center justify-center text-gray-400">Sin foto</div>
+                )}
 
-                return (
-                <article class="group bg-white rounded-3xl shadow-lg hover:shadow-2xl transition-all duration-300 border border-gray-100 overflow-hidden flex flex-col h-full hover:-translate-y-2">
-                    
-                    <div class="h-64 overflow-hidden relative">
-                        {imgSrc ? (
-                            <Image 
-                                src={imgSrc} 
-                                alt={proyecto.titulo} 
-                                width={600}
-                                height={400}
-                                class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105" 
-                            />
-                        ) : (
-                            <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">Sin foto</div>
-                        )}
-                        
-                        <div class="absolute top-4 left-4">
-                            <span class="px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm bg-blue-600 text-white">
-                                {proyecto.estado || 'Consultar'}
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="p-8 flex-1 flex flex-col">
-                        <div class="flex items-center text-sm text-gray-500 mb-3">
-                            <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                            {proyecto.ubicacion}
-                        </div>
-                        <h2 class="text-2xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">
-                            {proyecto.titulo}
-                        </h2>
-                        <p class="text-gray-600 mb-8 line-clamp-3 flex-grow leading-relaxed">
-                            {proyecto.descripcion_corta}
-                        </p>
-                        <a href={`/proyectos/${proyecto.slug}`} class="block text-center w-full bg-gray-50 hover:bg-blue-600 text-gray-900 hover:text-white font-bold py-4 rounded-xl transition-all duration-300">
-                            Ver detalles y planos
-                        </a>
-                    </div>
-                </article>
-            )})}
+                <div class="absolute top-4 left-4">
+                  <span class:list={[
+                    "px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wide shadow-sm text-white",
+                    proyecto.estado === "En comercialización" ? "bg-blue-600" : 
+                    proyecto.estado === "En construcción" ? "bg-yellow-500" : 
+                    proyecto.estado === "Entregado" ? "bg-green-600" : "bg-gray-600"
+                  ]}>
+                    {proyecto.estado}
+                  </span>
+                </div>
+              </div>
+
+              <div class="p-8 flex-1 flex flex-col">
+                <div class="flex items-center text-sm text-gray-500 mb-3">
+                  <svg class="w-4 h-4 mr-1 text-blue-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                  {proyecto.ubicacion}
+                </div>
+
+                <h2 class="text-2xl font-bold text-gray-900 mb-3 leading-tight group-hover:text-blue-600 transition-colors">{proyecto.titulo}</h2>
+                <p class="text-gray-600 mb-8 line-clamp-3 flex-grow leading-relaxed">{proyecto.descripcion_corta}</p>
+
+                <a href={`/proyectos/${proyecto.slug}`} class="block text-center w-full bg-gray-50 hover:bg-blue-600 text-gray-900 hover:text-white font-bold py-4 rounded-xl transition-all duration-300">
+                  Ver detalles y planos
+                </a>
+              </div>
+            </article>
+          ))}
         </div>
-    </main>
-
-    <Footer />
-  </body>
-</html>
+      </>
+    ) : (
+      <NoDisponible title="Proyectos no disponibles" />
+    )}
+  </main>
+</Layout>

@@ -1,63 +1,43 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Navbar from '../components/Navbar.astro';
-import Footer from '../components/Footer.astro';
+// src/pages/modelo.astro
+import Layout from "../layouts/Layout.astro";
 import ContactoForm from '../components/Contacto.astro';
+import PageHeader from '../components/PageHeader.astro';
 import { Image } from 'astro:assets';
-import imgHero from '../assets/pareja-suelo.jpg'; 
+import imgHeader from '../assets/pareja-suelo.webp'; 
+
+// SEO Props
+const seoTitle = "Cómo Funciona | Tu Primer Hogar";
+const seoDesc = "Descubre nuestro modelo de alquiler con opción a compra.";
 ---
 
-<html lang="es">
-  <head>
-    <BaseHead 
-      title="Cómo Funciona | Tu Primer Hogar" 
-      description="Descubre nuestro modelo de alquiler con opción a compra." 
-    />
-  </head>
-  <body class="bg-white font-sans text-gray-800">
-    
-    <Navbar isTransparent={true} />
-
-    <!-- 
-    1. HERO EXACTO (Igualado a Contacto, Proyectos y Actualidad)
-    - h-[40vh]: Altura relativa.
-    - min-h-[300px]: Altura mínima idéntica.
-    - justify-center: Centramos el contenido verticalmente.
-    -->
-    <header class="relative h-[40vh] min-h-[300px] flex flex-col justify-center items-center bg-cover bg-center" style={`background-image: url('${imgHero.src}');`}>
-        
-        <div class="absolute inset-0 bg-blue-900/70"></div>
-        
-        <!-- 
-        AJUSTE DE POSICIÓN
-        - mt-16: Margen superior para compensar visualmente el menú (en Contacto usamos mt-10, 
-        aquí un pelín más porque hay 3 líneas de texto: etiqueta + título doble).
-        -->
-        <div class="relative z-10 text-center px-4 max-w-5xl mx-auto mt-16">
-            
-            <span class="inline-block py-1 px-4 rounded-full bg-white/10 border border-white/30 text-white text-[10px] font-bold tracking-[0.2em] uppercase backdrop-blur-md mb-4 shadow-sm">
-                El Método TPH
-            </span>
-            
-            <!-- Texto ajustado para el espacio más pequeño -->
-            <h1 class="text-3xl md:text-5xl font-bold text-white leading-tight drop-shadow-lg">
+<Layout
+  title={seoTitle}
+  description={seoDesc}
+  navbarTransparent={true}
+>
+    <!-- 1. HERO SECTION -->
+    <PageHeader 
+        backgroundImage={imgHeader}
+        classes="h-[40vh] min-h-[300px]"
+        overlayClasses="bg-blue-900/70"
+    >
+        <div class="mt-16">
+            <h1 class="text-3xl md:text-5xl font-bold text-white leading-tight drop-shadow-lg uppercase">
                 Tu alquiler ahora <br/>
-                <span class="text-blue-300">es una inversión.</span>
+                <span class="text-blue-300">es una inversión</span>
             </h1>
-
         </div>
-    </header>
+    </PageHeader>
 
-    <!-- 
-    2. SECCIÓN "PUENTE"
-    -->
+    <!-- 2. SECCIÓN "PUENTE" -->
     <section class="py-24 bg-white">
         <div class="max-w-4xl mx-auto px-4 text-center">
             <h2 class="text-2xl md:text-3xl font-medium text-gray-900 leading-snug mb-8">
                 "Un modelo diseñado para personas con <span class="text-blue-600 font-bold">ingresos estables</span> que quieren comprar su casa pero aún no tienen la entrada ahorrada."
             </h2>
             <p class="text-lg text-gray-500 max-w-2xl mx-auto leading-relaxed">
-                Rompemos la barrera de entrada al mercado inmobiliario. Sin hipoteca inmediata, sin descapitalizarte y con la seguridad de estar pagando tu futuro hogar desde el primer mes.
+                Rompemos la barrera de acceso al mercado inmobiliario. Sin hipoteca inmediata, sin perder tus ahorros y con la seguridad de estar pagando tu futuro hogar desde el primer mes a un precio razonable.
             </p>
             
             <div class="mt-12 flex justify-center">
@@ -80,51 +60,52 @@ import imgHero from '../assets/pareja-suelo.jpg';
                 <!-- PASO 1 -->
                 <div class="flex flex-col items-center text-center">
                     <div class="w-24 h-24 bg-white rounded-full shadow-lg border-4 border-white flex items-center justify-center text-blue-600 mb-6 z-10">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                        <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">1. Eliges tu Casa</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed px-2">Seleccionas una vivienda nueva de nuestro catálogo exclusivo.</p>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">1. Eliges tu casa</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed px-2">Seleccionas la vivienda que más te guste. Tenemos a tu disposición distintas viviendas que dan respuesta a distintas necesidades habitacionales. Eliges tú.</p>
                 </div>
                 <!-- PASO 2 -->
                 <div class="flex flex-col items-center text-center">
                     <div class="w-24 h-24 bg-white rounded-full shadow-lg border-4 border-white flex items-center justify-center text-blue-600 mb-6 z-10">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11.536 19.464a.5.5 0 01-.491.137l-.732-.244a.5.5 0 01-.366-.491v-.732a1 1 0 01.244-.732l.244-.244-1.22-1.22A6 6 0 015 13a6 6 0 0110-6zM5 13a6 6 0 0112 0"></path></svg>
+                        <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24">  <path d="M5 21V3H19V21" stroke="#00288D" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                        <path d="M19 21L11 18V5L19 3V21Z" stroke="#00288D" stroke-width="1.5" stroke-linejoin="round" fill="rgba(0, 40, 141, 0.05)"/></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">2. Entras a Vivir</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed px-2">Firmas ante notario y te mudas ya. Sin pagar el 20% inicial.</p>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">2. Entras a vivir</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed px-2">Se realiza un registro notarial que garantia tus derechos y te damos las llaves de tu casa sin que tengas que pagar el 20% habitual de los modelos de financiación convencionales.</p>
                 </div>
                 <!-- PASO 3 -->
                 <div class="flex flex-col items-center text-center">
                     <div class="w-24 h-24 bg-white rounded-full shadow-lg border-4 border-white flex items-center justify-center text-blue-600 mb-6 z-10">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">3. Ahorras Pagando</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed px-2">Parte de tu alquiler se acumula cada mes como capital futuro.</p>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">3. Ahorras pagando</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed px-2">Gran parte de tu alquiler se acumula cada mes como capital futuro. El dinero ahorrado será descontado del precio final de la vivienda en el momento de la compra.</p>
                 </div>
                 <!-- PASO 4 -->
                 <div class="flex flex-col items-center text-center">
                     <div class="w-24 h-24 bg-blue-600 rounded-full shadow-lg shadow-blue-300 border-4 border-white flex items-center justify-center text-white mb-6 z-10">
-                        <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+                        <svg class="w-14 h-14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900 mb-3">4. Es Tuya</h3>
-                    <p class="text-gray-600 text-sm leading-relaxed px-2">A los 5 años, usas lo ahorrado para la entrada y firmas la compra.</p>
+                    <h3 class="text-xl font-bold text-gray-900 mb-3">4. Es tuya</h3>
+                    <p class="text-gray-600 text-sm leading-relaxed px-2">En tan sólo 5 años dejarás de ser inquilino para convertirte en propietario de tu propia casa. Tu proyecto personal se ha cumplido. ¡Enhorabuena!</p>
                 </div>
             </div>
         </div>
     </section>
 
     <!-- 4. COMPARATIVA -->
-    <section class="py-32 bg-gray-900 text-white">
+    <section class="py-32 text-white bg-gray-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                 
-                <!-- COLUMNA IZQUIERDA: TEXTO -->
+                <!-- COLUMNA IZQUIERDA -->
                 <div class="space-y-10">
                     <div>
-                        <span class="text-blue-400 font-bold tracking-widest text-sm uppercase mb-2 block">La diferencia real</span>
+                        <span class="text-blue-400 font-bold tracking-widest text-sm uppercase mb-2 block">La diferencia es real</span>
                         <h2 class="text-3xl md:text-4xl font-bold mb-6">La matemática es simple</h2>
                         <p class="text-gray-400 text-lg leading-relaxed">
-                            En el alquiler tradicional, pagas por el derecho a usar un techo un mes más. Con nuestro modelo, cada pago construye el camino hacia la propiedad.
+                            En el alquiler tradicional, pagas cada mes por el derecho de uso de un techo. Sin embargo, con nuestro modelo cada pago te acerca a la meta final de tener una propiedad.
                         </p>
                     </div>
                     
@@ -137,7 +118,7 @@ import imgHero from '../assets/pareja-suelo.jpg';
                             </div>
                             <div class="ml-6">
                                 <h3 class="text-xl leading-6 font-bold text-white">Seguridad de Precio</h3>
-                                <p class="mt-2 text-base text-gray-400 leading-relaxed">Congelamos el precio de compra hoy. Olvídate de la inflación inmobiliaria.</p>
+                                <p class="mt-2 text-base text-gray-400 leading-relaxed">Congelamos el precio de compra hoy. Olvídate de la especulación inmobiliaria.</p>
                             </div>
                         </div>
                         <div class="flex">
@@ -148,29 +129,23 @@ import imgHero from '../assets/pareja-suelo.jpg';
                             </div>
                             <div class="ml-6">
                                 <h3 class="text-xl leading-6 font-bold text-white">Accesibilidad Real</h3>
-                                <p class="mt-2 text-base text-gray-400 leading-relaxed">Sin la barrera de los 40.000€ iniciales. Tu capacidad de pago mensual es tu aval.</p>
+                                <p class="mt-2 text-base text-gray-400 leading-relaxed">Al eliminar el pago del 20% de la entrada inicial, no hay barreras financieras. Con tus ingresos mensuales si puedes acceder a una vivienda.</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- 
-                COLUMNA DERECHA: VISUALIZACIÓN "DINERO INTELIGENTE" 
-                Sin números, solo concepto visual.
-                -->
+                <!-- COLUMNA DERECHA: VISUALIZACIÓN -->
                 <div class="bg-gray-800 rounded-3xl p-10 border border-gray-700 shadow-2xl relative overflow-hidden">
-                    <!-- Efecto de luz de fondo sutil -->
                     <div class="absolute top-0 right-0 w-64 h-64 bg-blue-500/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
 
                     <h3 class="text-lg font-bold text-white mb-8 relative z-10">¿A dónde va tu cuota mensual?</h3>
                     
-                    <!-- CASO 1: ALQUILER TRADICIONAL -->
                     <div class="mb-10 relative z-10">
                         <div class="flex justify-between items-end mb-2">
                             <span class="text-gray-400 text-sm font-medium">Alquiler Convencional</span>
                             <span class="text-red-400 text-xs font-bold uppercase tracking-wide">100% Gasto</span>
                         </div>
-                        <!-- Barra gris entera (Gasto) -->
                         <div class="w-full h-12 bg-gray-700/50 rounded-xl overflow-hidden flex items-center px-4 border border-gray-600">
                             <span class="text-gray-500 text-sm flex items-center">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
@@ -179,7 +154,6 @@ import imgHero from '../assets/pareja-suelo.jpg';
                         </div>
                     </div>
 
-                    <!-- CASO 2: MODELO TPH (VISUALIZACIÓN DE AHORRO) -->
                     <div class="relative z-10">
                         <div class="flex justify-between items-end mb-2">
                             <span class="text-white text-sm font-bold">Modelo Tu Primer Hogar</span>
@@ -189,38 +163,27 @@ import imgHero from '../assets/pareja-suelo.jpg';
                             </span>
                         </div>
                         
-                        <!-- Barra Dividida: Gasto + INVERSIÓN -->
                         <div class="w-full h-14 bg-gray-700/50 rounded-xl overflow-hidden flex border border-blue-500/30">
-                            
-                            <!-- Parte Gasto (Gris) -->
-                            <div class="w-[65%] h-full flex items-center justify-center border-r border-gray-600/50 bg-gray-700/30">
+                            <div class="w-[50%] h-full flex items-center justify-center border-r border-gray-600/50 bg-gray-700/30">
                                 <span class="text-gray-500 text-xs">Alquiler</span>
                             </div>
-                            
-                            <!-- Parte Ahorro (Azul Vibrante con animación) -->
-                            <div class="w-[35%] h-full bg-blue-600 flex items-center justify-center relative overflow-hidden group">
-                                <!-- Brillo animado -->
+                            <div class="w-[50%] h-full bg-blue-600 flex items-center justify-center relative overflow-hidden group">
                                 <div class="absolute inset-0 bg-white/20 skew-x-12 -translate-x-full animate-[shimmer_2s_infinite]"></div>
-                                
                                 <span class="text-white font-bold text-sm tracking-wide flex items-center relative z-10">
                                     <svg class="w-4 h-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
                                     TU CASA
                                 </span>
                             </div>
-
                         </div>
                         <p class="text-xs text-blue-300 mt-3 text-center">
                             Cada mes, una parte de tu cuota se guarda para la entrada de tu vivienda.
                         </p>
                     </div>
-
                 </div>
-
             </div>
         </div>
     </section>
 
-    <!-- ESTILO PARA LA ANIMACIÓN DE BRILLO -->
     <style>
         @keyframes shimmer {
             100% { transform: translateX(100%); }
@@ -228,11 +191,11 @@ import imgHero from '../assets/pareja-suelo.jpg';
     </style>
 
     <!-- 5. CTA FINAL -->
-    <div class="bg-white py-32">
+    <div class="bg-white py-32"> 
         <div class="max-w-4xl mx-auto px-4">
             <div class="text-center mb-16">
-                <h2 class="text-4xl font-bold text-gray-900 mb-4">¿Te encaja el modelo?</h2>
-                <p class="text-xl text-gray-500">Analizamos tu caso gratis y sin compromiso.</p>
+                <h2 class="text-4xl font-bold text-blue-600 mb-4">¿Te encaja el modelo?</h2>
+                <p class="text-xl text-gray-700">Analizamos tu caso gratis y sin compromiso.</p>
             </div>
             
             <div class="max-w-lg mx-auto">
@@ -244,8 +207,4 @@ import imgHero from '../assets/pareja-suelo.jpg';
             </div>
         </div>
     </div>
-
-    <Footer />
-
-  </body>
-</html>
+</Layout>

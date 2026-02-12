@@ -1,211 +1,202 @@
 ---
-import BaseHead from '../components/BaseHead.astro';
-import Navbar from '../components/Navbar.astro';
-import Footer from '../components/Footer.astro';
-import fetchApi from '../lib/strapi';
-import { Image } from 'astro:assets';
+// 1. Importaciones unificadas
+import Layout from "../layouts/Layout.astro";
+import PageHeader from "../components/PageHeader.astro";
+import NoDisponible from "../components/NoDisponible.astro";
+import imgHeader from "../assets/subiendo-escaleras.webp";
 
-// --- CAMBIA ESTO POR TU IMAGEN DE CABECERA ---
-import imgHeader from '../assets/subiendo-escaleras.jpg'; 
-// -------------------------------------------
+// WP e infraestructura
+import { fetchWP } from "../lib/wordpress";
+import { sanitizeWPText } from "../lib/sanitize";
 
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+// 1) Fetch con fallback robusto (Timeout ya incluido en fetchWP)
+let todosLosDocs: any[] = [];
+let wpAvailable = true;
 
-// 1. DATOS PÁGINA GENERAL
-let paginaData = null;
 try {
-    const response = await fetchApi<any>({
-        endpoint: 'pagina-accionista',
-        query: {
-            populate: {
-                documentos_generales: { populate: '*' },
-                documentos_financieros: { populate: '*' }
-            }
-        }
-    });
-    paginaData = response;
-} catch (e) {
-    console.error("Aún no hay datos en Pagina Accionistas");
+  todosLosDocs = await fetchWP<any[]>({
+    endpoint: "documentos", // Asegúrate de que este es el CPT en WP
+    params: {
+      per_page: "100",
+      acf_format: "standard",
+      orderby: "date",
+      order: "desc",
+    },
+  });
+} catch (err) {
+  console.error("[/accionistas] WP no disponible:", err);
+  wpAvailable = false;
 }
 
-// 2. HECHOS RELEVANTES
-let hechosRelevantes = [];
-try {
-    hechosRelevantes = await fetchApi<any[]>({
-        endpoint: 'hecho-relevantes',
-        query: {
-            sort: 'fecha:desc',
-            populate: '*'
-        }
-    });
-} catch (e) {
-    console.error("No hay hechos relevantes");
-}
+// 2) Clasificación (solo si WP disponible)
+const safeDocs = wpAvailable ? todosLosDocs : [];
 
-// Helpers
-const getFileUrl = (file) => file?.url ? (file.url.startsWith('http') ? file.url : STRAPI_URL + file.url) : '#';
-const getFileSize = (kbytes) => kbytes > 1000 ? `${(kbytes/1000).toFixed(2)} MB` : `${Math.round(kbytes)} KB`;
+const docsGeneral = safeDocs.filter((doc) => doc?.acf?.tipo_documento === "general");
+const docsFinanciera = safeDocs.filter((doc) => doc?.acf?.tipo_documento === "financiera");
+const hechosRelevantes = safeDocs.filter((doc) => doc?.acf?.tipo_documento === "hecho_relevante");
+
+// Helper visual para etiquetas de archivo
+const getFileLabel = (url: string | null | undefined) => {
+  if (!url) return "";
+  const ext = url.split(".").pop()?.toUpperCase() || "";
+  return `${ext} • DESCARGAR`;
+};
+
+const safeTitle = (value: string | null | undefined) => sanitizeWPText(value);
+
+// SEO Props
+const seoTitle = "Inversores y Accionistas | Tu Primer Hogar";
+const seoDesc = "Acceso a información corporativa, estados financieros y hechos relevantes de Tu Primer Hogar.";
 ---
 
-<html lang="es" class="scroll-smooth">
-  <head>
-    <BaseHead 
-      title="Inversores y Accionistas | Tu Primer Hogar" 
-      description="Información corporativa, financiera y hechos relevantes para accionistas." 
-    />
-  </head>
-  <body class="bg-gray-50 font-sans text-gray-800">
-    
-    <Navbar isTransparent={true} />
+<Layout
+  title={seoTitle}
+  description={seoDesc}
+  navbarTransparent={true}
+>
+  <!-- HERO SECTION -->
+  <PageHeader
+    backgroundImage={imgHeader}
+    title="Inversores y Accionistas"
+    subtitle="Transparencia y rigor informativo."
+    classes="h-[40vh] min-h-[300px] pt-16"
+    overlayClasses="bg-blue-900/70"
+  />
 
-    <!-- HERO -->
-    <header class="relative h-[35vh] min-h-[300px] flex flex-col justify-center items-center bg-cover bg-center" style={`background-image: url('${imgHeader.src}');`}>
-        <div class="absolute inset-0 bg-blue-900/70"></div>
-        <div class="relative z-10 text-center px-4 pt-16">
-            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
-                Inversores y Accionistas
-            </h1>
-            <p class="text-blue-100 text-lg mt-4 max-w-2xl mx-auto font-light">
-                Compromiso con la transparencia. Información regulatoria y financiera.
-            </p>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    {wpAvailable ? (
+      <div class="flex flex-col lg:flex-row gap-12 relative">
         
-        <div class="flex flex-col lg:flex-row gap-12 relative">
-            
-            <!-- SIDEBAR -->
-            <aside class="lg:w-1/4">
-                <nav class="sticky top-28 bg-white rounded-2xl shadow-sm border border-gray-100 p-2 overflow-hidden">
-                    <ul class="flex flex-col">
-                        <li>
-                            <a href="#info-general" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
-                                Información General
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#info-financiera" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
-                                Información Financiera
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#hechos-relevantes" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
-                                Hechos Relevantes
-                            </a>
-                        </li>
-                    </ul>
-                </nav>
-            </aside>
+        <!-- SIDEBAR NAVEGACIÓN (Sticky) -->
+        <aside class="lg:w-1/4">
+          <nav class="sticky top-28 bg-white rounded-2xl shadow-sm border border-gray-100 p-2 overflow-hidden">
+            <ul class="flex flex-col">
+              <li>
+                <a href="#info-general" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                  Información General
+                </a>
+              </li>
+              <li>
+                <a href="#info-financiera" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                  Información Financiera
+                </a>
+              </li>
+              <li>
+                <a href="#hechos-relevantes" class="block px-5 py-3 text-sm font-bold text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors">
+                  Hechos Relevantes
+                </a>
+              </li>
+            </ul>
+          </nav>
+        </aside>
 
-            <!-- CONTENIDO PRINCIPAL -->
-            <div class="lg:w-3/4 space-y-20">
-                
-                <!-- 1. INFORMACIÓN GENERAL -->
-                <section id="info-general" class="scroll-mt-28">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-8 border-b border-gray-200 pb-4">Información General</h2>
-                    
-                    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-10 shadow-sm">
-                        {paginaData?.documentos_generales?.map((doc) => (
-                            <div class="flex items-center justify-between p-5 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors gap-4">
-                                <div class="flex items-center gap-4 overflow-hidden">
-                                    <div class="bg-blue-50 p-2.5 rounded-xl text-blue-600 shrink-0">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="font-bold text-gray-900 truncate">{doc.titulo}</p>
-                                        {doc.archivo && <p class="text-xs text-gray-500 uppercase">{doc.archivo.ext.replace('.','')} • {getFileSize(doc.archivo.size)}</p>}
-                                    </div>
-                                </div>
-                                {doc.archivo && (
-                                    <a href={getFileUrl(doc.archivo)} target="_blank" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        <span class="hidden sm:inline">Ver Documento</span>
-                                        <span class="sm:hidden">Ver</span>
-                                    </a>
-                                )}
-                            </div>
-                        ))}
-                        
-                        {!paginaData?.documentos_generales?.length && (
-                            <p class="p-6 text-gray-500 italic text-sm">No hay documentación general disponible.</p>
-                        )}
+        <!-- CONTENIDO DE DOCUMENTACIÓN -->
+        <div class="lg:w-3/4 space-y-20">
+          
+          <!-- 1. GENERAL -->
+          <section id="info-general" class="scroll-mt-28">
+            <h2 class="text-2xl font-bold text-blue-600 mb-8 border-b border-gray-200 pb-4">
+              Información General
+            </h2>
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-10 shadow-sm">
+              {docsGeneral.map((doc) => (
+                <div class="flex items-center justify-between p-5 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors gap-4">
+                  <div class="flex items-center gap-4 overflow-hidden">
+                    <div class="bg-blue-50 p-2.5 rounded-xl text-blue-600 shrink-0">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
                     </div>
-                </section>
-
-                <!-- 2. INFORMACIÓN FINANCIERA -->
-                <section id="info-financiera" class="scroll-mt-28">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-8 border-b border-gray-200 pb-4">Información Financiera</h2>
-                    
-                    <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-10 shadow-sm">
-                        {paginaData?.documentos_financieros?.map((doc) => (
-                            <div class="flex items-center justify-between p-5 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors gap-4">
-                                <div class="flex items-center gap-4 overflow-hidden">
-                                    <div class="bg-green-50 p-2.5 rounded-xl text-green-600 shrink-0">
-                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
-                                    </div>
-                                    <div class="min-w-0">
-                                        <p class="font-bold text-gray-900 truncate">{doc.titulo}</p>
-                                        <p class="text-xs text-gray-500 uppercase">
-                                            {doc.subtitulo ? <span class="font-semibold text-gray-600">{doc.subtitulo}</span> : ''}
-                                            {doc.subtitulo && doc.archivo ? ' • ' : ''}
-                                            {doc.archivo && <span>{doc.archivo.ext.replace('.','')} • {getFileSize(doc.archivo.size)}</span>}
-                                        </p>
-                                    </div>
-                                </div>
-                                {doc.archivo && (
-                                    <a href={getFileUrl(doc.archivo)} target="_blank" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        <span class="hidden sm:inline">Ver Documento</span>
-                                        <span class="sm:hidden">Ver</span>
-                                    </a>
-                                )}
-                            </div>
-                        ))}
-
-                        {!paginaData?.documentos_financieros?.length && (
-                            <p class="p-6 text-gray-500 italic text-sm">No hay información financiera disponible.</p>
-                        )}
+                    <div class="min-w-0">
+                      <p class="font-bold text-gray-900 truncate">{safeTitle(doc?.title?.rendered)}</p>
+                      {doc?.acf?.subtitulo && (
+                        <p class="text-xs text-gray-500 uppercase">{doc.acf.subtitulo}</p>
+                      )}
                     </div>
-                </section>
+                  </div>
 
-                <!-- 3. HECHOS RELEVANTES -->
-                <section id="hechos-relevantes" class="scroll-mt-28">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-8 border-b border-gray-200 pb-4">Hechos Relevantes</h2>
-                    
-                    <div class="space-y-4">
-                        {hechosRelevantes.map((hr) => (
-                            <div class="bg-white p-6 rounded-2xl border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-blue-300 hover:shadow-sm transition-all">
-                                <div>
-                                    <div class="flex items-center gap-3 mb-1">
-                                        <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded border border-gray-200">HR</span>
-                                        <span class="text-sm text-gray-500 font-medium">
-                                            {new Date(hr.fecha).toLocaleDateString('es-ES', { day: 'numeric', month: 'long', year: 'numeric' })}
-                                        </span>
-                                    </div>
-                                    <h3 class="text-lg font-bold text-gray-900">{hr.titulo}</h3>
-                                </div>
-                                {hr.archivo && (
-                                    <a href={getFileUrl(hr.archivo)} target="_blank" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
-                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                        <span class="inline">Ver Documento</span>
-                                    </a>
-                                )}
-                            </div>
-                        ))}
-                        
-                        {hechosRelevantes.length === 0 && (
-                            <div class="text-center py-10 border-2 border-dashed border-gray-200 rounded-2xl">
-                                <p class="text-gray-400">No hay hechos relevantes publicados.</p>
-                            </div>
-                        )}
-                    </div>
-                </section>
-
+                  {doc?.acf?.archivo && (
+                    <a href={doc.acf.archivo} target="_blank" rel="noopener noreferrer" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      <span class="hidden sm:inline">Ver Documento</span>
+                      <span class="sm:hidden">Ver</span>
+                    </a>
+                  )}
+                </div>
+              ))}
+              {!docsGeneral.length && <p class="p-6 text-gray-500 italic text-sm">No hay documentos disponibles.</p>}
             </div>
-        </div>
-    </main>
+          </section>
 
-    <Footer />
-  </body>
-</html>
+          <!-- 2. FINANCIERA -->
+          <section id="info-financiera" class="scroll-mt-28">
+            <h2 class="text-2xl font-bold text-blue-600 mb-8 border-b border-gray-200 pb-4">
+              Información Financiera
+            </h2>
+            <div class="bg-white rounded-2xl border border-gray-200 overflow-hidden mb-10 shadow-sm">
+              {docsFinanciera.map((doc) => (
+                <div class="flex items-center justify-between p-5 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors gap-4">
+                  <div class="flex items-center gap-4 overflow-hidden">
+                    <div class="bg-green-50 p-2.5 rounded-xl text-green-600 shrink-0">
+                      <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </div>
+                    <div class="min-w-0">
+                      <p class="font-bold text-gray-900 truncate">{safeTitle(doc?.title?.rendered)}</p>
+                      <p class="text-xs text-gray-500 uppercase">
+                        {doc?.acf?.subtitulo && <span class="font-semibold text-gray-600">{doc.acf.subtitulo} • </span>}
+                        {getFileLabel(doc?.acf?.archivo)}
+                      </p>
+                    </div>
+                  </div>
+                  {doc?.acf?.archivo && (
+                    <a href={doc.acf.archivo} target="_blank" rel="noopener noreferrer" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      <span class="hidden sm:inline">Ver Documento</span>
+                    </a>
+                  )}
+                </div>
+              ))}
+              {!docsFinanciera.length && <p class="p-6 text-gray-500 italic text-sm">No hay información financiera disponible.</p>}
+            </div>
+          </section>
+
+          <!-- 3. HECHOS RELEVANTES -->
+          <section id="hechos-relevantes" class="scroll-mt-28">
+            <h2 class="text-2xl font-bold text-blue-600 mb-8 border-b border-gray-200 pb-4">
+              Hechos Relevantes
+            </h2>
+            <div class="space-y-4">
+              {hechosRelevantes.map((hr) => (
+                <div class="bg-white p-6 rounded-2xl border border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:border-blue-300 hover:shadow-sm transition-all">
+                  <div>
+                    <div class="flex items-center gap-3 mb-1">
+                      <span class="bg-gray-100 text-gray-600 text-xs font-bold px-2 py-1 rounded border border-gray-200">HR</span>
+                      <span class="text-sm text-gray-500 font-medium">
+                        {new Date(hr.date).toLocaleDateString("es-ES", { day: "numeric", month: "long", year: "numeric" })}
+                      </span>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">{safeTitle(hr?.title?.rendered)}</h3>
+                  </div>
+                  {hr?.acf?.archivo && (
+                    <a href={hr.acf.archivo} target="_blank" rel="noopener noreferrer" class="shrink-0 bg-blue-50 text-blue-700 px-4 py-2 rounded-xl text-sm font-bold hover:bg-blue-100 transition-colors flex items-center justify-center gap-2 w-full sm:w-auto">
+                      <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                      <span class="inline">Ver Documento</span>
+                    </a>
+                  )}
+                </div>
+              ))}
+              {!hechosRelevantes.length && (
+                <div class="text-center py-10 border-2 border-dashed border-gray-200 rounded-2xl">
+                  <p class="text-gray-400">No hay hechos relevantes publicados.</p>
+                </div>
+              )}
+            </div>
+          </section>
+        </div>
+      </div>
+    ) : (
+      <NoDisponible 
+        title="Información no disponible"
+        message="En este momento no podemos cargar la información de accionistas. Estamos trabajando para restablecer el servicio."
+      />
+    )}
+  </main>
+</Layout>

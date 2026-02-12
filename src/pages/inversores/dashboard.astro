@@ -1,177 +1,238 @@
 ---
-import BaseHead from '../../components/BaseHead.astro';
-import Navbar from '../../components/Navbar.astro';
-import Footer from '../../components/Footer.astro';
+import Layout from "../../layouts/Layout.astro";
+import { WP_URL } from '../../lib/wordpress'; 
+import { sanitizeWPText } from '../../lib/sanitize';
 
-// 1. URL DINÁMICA
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+// 1. SEGURIDAD: Restauramos los nombres de cookies ORIGINALES que te funcionan
+const token = Astro.cookies.get('wp_jwt')?.value;
+const username = Astro.cookies.get('wp_user_display')?.value || "Inversor";
 
-// --- SEGURIDAD ---
-const jwt = Astro.cookies.get('jwt')?.value;
-if (!jwt) return Astro.redirect('/inversores');
+// Si no hay token, redirigimos
+if (!token) {
+    return Astro.redirect('/inversores');
+}
 
-// 2. PETICIÓN A LA URL CORRECTA
-const response = await fetch(`${STRAPI_URL}/api/users/me?populate[proyectos][populate]=documentos_privados`, {
-    headers: { Authorization: `Bearer ${jwt}` }
-});
+let misProyectosCompletos = [];
+const baseUrl = WP_URL.replace(/\/$/, '');
+const REQUEST_TIMEOUT_MS = 8000;
+const ALLOWED_DOC_HOSTS = new Set<string>([
+    new URL(baseUrl).hostname,
+    "admin.tuprimerhogar.es",
+]);
 
-if (!response.ok) return Astro.redirect('/api/logout');
+function getSafeDocUrl(rawUrl: string | null | undefined): string | null {
+    if (!rawUrl) return null;
 
-const usuario = await response.json();
-const proyectosCrudos = usuario.proyectos || [];
+    try {
+        const parsed = new URL(rawUrl, baseUrl);
+        const isHttp = parsed.protocol === "https:" || parsed.protocol === "http:";
+        const isAllowedHost = ALLOWED_DOC_HOSTS.has(parsed.hostname);
+        if (!isHttp || !isAllowedHost) return null;
+        return parsed.toString();
+    } catch {
+        return null;
+    }
+}
 
-// --- FILTRO ANTI-DUPLICADOS POR TÍTULO ---
-// Usamos el TÍTULO como clave única. 
-// Si hay dos proyectos con distinto ID pero mismo título, se fusionan en uno.
-const misProyectos = [
-    ...new Map(proyectosCrudos.map((item: any) => [item.titulo, item])).values()
-];
+async function fetchWithTimeout(url: string, options: RequestInit = {}, timeoutMs = REQUEST_TIMEOUT_MS) {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-// Función de estilos
-const getFileStyle = (ext) => {
-    if (!ext) return 'bg-gray-50 text-gray-600';
-    const e = ext.toLowerCase();
-    if (e.includes('pdf')) return 'bg-red-50 text-red-600';
-    if (e.includes('xls') || e.includes('csv') || e.includes('sheet')) return 'bg-green-50 text-green-600';
-    if (e.includes('jpg') || e.includes('png') || e.includes('jpeg')) return 'bg-blue-50 text-blue-600';
-    if (e.includes('zip') || e.includes('rar')) return 'bg-yellow-50 text-yellow-600';
+    try {
+        return await fetch(url, { ...options, signal: controller.signal });
+    } finally {
+        clearTimeout(timeout);
+    }
+}
+
+try {
+    // 2. RECUPERAR DATOS
+    const resUser = await fetchWithTimeout(`${baseUrl}/wp-json/wp/v2/users/me?context=edit`, {
+        headers: { 
+            'Authorization': `Bearer ${token}`
+        }
+    });
+
+    if (!resUser.ok) {
+        throw new Error("Sesión caducada");
+    }
+
+    const user = await resUser.json();
+    
+    // Si el usuario tiene proyectos asignados
+    if (user.acf && user.acf.proyectos_asignados && user.acf.proyectos_asignados.length > 0) {
+        const ids = user.acf.proyectos_asignados.map((p: any) => (typeof p === 'object' ? p.ID : p)).join(',');
+
+        const resProyectos = await fetchWithTimeout(`${baseUrl}/wp-json/wp/v2/proyectos?include=${ids}&acf_format=standard&_embed=true`, {
+            headers: {
+                'Authorization': `Bearer ${token}`
+            }
+        });
+        
+        if (resProyectos.ok) {
+            misProyectosCompletos = await resProyectos.json();
+        }
+    }
+
+} catch (error) {
+    console.error("Error en Dashboard:", error);
+    // Borramos la cookie correcta si falla
+    Astro.cookies.delete('wp_jwt', { path: '/' });
+    return Astro.redirect('/inversores'); 
+}
+
+// 3. HELPERS VISUALES (Originales)
+const getFileStyle = (mimeType: string, filename: string) => {
+    if (!mimeType) return 'bg-gray-50 text-gray-600';
+    const name = filename ? filename.toLowerCase() : '';
+    
+    if (mimeType.includes('pdf')) return 'bg-red-50 text-red-600';
+    if (mimeType.includes('sheet') || mimeType.includes('excel') || name.endsWith('.csv')) return 'bg-green-50 text-green-600';
+    if (mimeType.includes('image')) return 'bg-blue-50 text-blue-600';
+    if (name.endsWith('.zip') || name.endsWith('.rar')) return 'bg-yellow-50 text-yellow-600';
+    
     return 'bg-gray-50 text-gray-600';
 };
+
+const getExtension = (filename: string) => filename ? filename.split('.').pop()?.toUpperCase() : 'FILE';
+const getSize = (bytes: number) => bytes ? (bytes > 1000000 ? (bytes/1000000).toFixed(2) + ' MB' : Math.round(bytes/1000) + ' KB') : '-';
 ---
 
-<html lang="es">
-  <head>
-    <BaseHead title="Mi Panel | Inversores" description="Panel privado de gestión de inversiones." />
-  </head>
-  <body class="bg-gray-50 pt-24 font-sans text-gray-800">
-    
-    <Navbar />
-
-    <main class="max-w-5xl mx-auto px-4 py-12 min-h-[70vh]">
+<Layout 
+    title="Mi Panel | Inversores" 
+    description="Panel privado de inversores"
+    navbarTransparent={false} 
+>
+    <head>
+        <meta name="robots" content="noindex, nofollow" />
+    </head>
+    <!-- Contenedor gris para mantener tu diseño original -->
+    <div class="bg-gray-50 min-h-screen pt-12 pb-24">
         
-        <!-- CABECERA -->
-        <div class="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4 border-b border-gray-200 pb-6">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900">Hola, {usuario.username}</h1>
-                <p class="text-gray-500 mt-2">Aquí tienes la documentación actualizada de tus inversiones.</p>
-            </div>
-            <a href="/api/logout" class="group flex items-center px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-red-600 text-sm font-bold hover:bg-red-50 hover:border-red-200 transition-all shadow-sm">
-                <svg class="w-4 h-4 mr-2 group-hover:-translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
-                Cerrar Sesión
-            </a>
-        </div>
-
-        {misProyectos.length === 0 ? (
-            <div class="bg-white p-16 rounded-3xl border border-dashed border-gray-300 text-center">
-                <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 text-gray-400">
-                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+        <div class="max-w-5xl mx-auto px-4 mt-20"> <!-- Margen superior para el Navbar fixed -->
+            
+            <!-- HEADER DASHBOARD -->
+            <div class="flex flex-col md:flex-row justify-between items-end mb-12 gap-4 border-b border-gray-200 pb-6">
+                <div>
+                    <h1 class="text-3xl font-bold text-gray-900">Hola, {username} 👋</h1>
+                    <p class="text-gray-500 mt-2">Aquí tienes la documentación actualizada de tus inversiones.</p>
                 </div>
-                <h3 class="text-lg font-bold text-gray-900">No hay proyectos asignados</h3>
-                <p class="text-gray-500 mt-2 max-w-md mx-auto">Actualmente no tienes inversiones activas vinculadas a tu cuenta. Si crees que es un error, contacta con tu gestor.</p>
+                
+                <!-- Botón Logout -->
+                <a href="/api/logout" class="px-5 py-2.5 bg-white border border-gray-200 rounded-xl text-red-600 text-sm font-bold hover:bg-red-50 transition-colors shadow-sm cursor-pointer">
+                    Cerrar Sesión
+                </a>
             </div>
-        ) : (
-            <div class="space-y-12">
-                {misProyectos.map((proyecto: any) => (
-                    
-                    <article class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden transition-all hover:shadow-md">
+
+            <!-- LISTA DE PROYECTOS -->
+            {misProyectosCompletos.length === 0 ? (
+                <div class="bg-white p-12 rounded-3xl border border-gray-200 text-center shadow-sm">
+                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4 text-gray-400">
+                        <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4"></path></svg>
+                    </div>
+                    <h3 class="text-lg font-bold text-gray-900">Sin proyectos asignados</h3>
+                    <p class="text-gray-500 mt-2">Actualmente no tienes inversiones activas vinculadas a tu cuenta.</p>
+                </div>
+            ) : (
+                <div class="space-y-10">
+                    {misProyectosCompletos.map((proyecto: any) => {
                         
-                        <!-- ENCABEZADO PROYECTO -->
-                        <div class="p-6 md:p-8 border-b border-gray-100 bg-white">
-                            <div class="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                <div>
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-700 uppercase tracking-wide mb-3">
-                                        Proyecto de Inversión
-                                    </span>
-                                    <h2 class="text-2xl md:text-3xl font-bold text-gray-900 leading-tight mb-2">
-                                        {proyecto.titulo}
-                                    </h2>
-                                    
-                                    {proyecto.ubicacion && (
-                                        <div class="flex items-center text-gray-500 text-sm">
-                                            <svg class="w-4 h-4 mr-1.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
-                                            {proyecto.ubicacion}
-                                        </div>
-                                    )}
-                                </div>
-                                
-                                <div class="flex items-center gap-2 self-start">
-                                    <span class={`px-4 py-1.5 rounded-full text-xs font-bold uppercase border 
-                                        ${proyecto.estado === 'Entregado' ? 'bg-green-50 text-green-700 border-green-200' : 
-                                          proyecto.estado === 'En construcción' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 
-                                          'bg-gray-100 text-gray-600 border-gray-200'}`}>
-                                        {proyecto.estado || 'Activo'}
-                                    </span>
+                        const acf = proyecto.acf || {};
+                        const docs = [];
+                        if (acf.documento_1) docs.push(acf.documento_1);
+                        if (acf.documento_2) docs.push(acf.documento_2);
+                        if (acf.documento_3) docs.push(acf.documento_3);
+                        
+                        const titulo = sanitizeWPText(proyecto?.title?.rendered);
+                        const ubicacion = acf.ubicacion || '';
+                        const estado = acf.estado || 'En Curso';
+                        const linkFicha = `/proyectos/${proyecto.slug}`;
+
+                        return (
+                        <article class="bg-white rounded-3xl shadow-sm border border-gray-200 overflow-hidden transition-all hover:shadow-md">
+                            
+                            <!-- CABECERA TARJETA -->
+                            <div class="p-8 border-b border-gray-100 bg-white">
+                                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                    <div>
+                                        <span class="text-xs font-bold text-blue-600 uppercase tracking-wider mb-2 block flex items-center gap-1">
+                                            <span class="w-2 h-2 rounded-full bg-blue-600 animate-pulse"></span>
+                                            Inversión Activa
+                                        </span>
+                                        <h2 class="text-2xl font-bold text-gray-900">{titulo}</h2>
+                                        
+                                        {ubicacion && (
+                                            <p class="text-sm text-gray-500 mt-1 flex items-center">
+                                                <svg class="w-4 h-4 mr-1 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                                                {ubicacion}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div class="flex flex-col items-end gap-3">
+                                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-gray-100 text-gray-700 uppercase border border-gray-200">
+                                            {estado}
+                                        </span>
+                                        <a href={linkFicha} target="_blank" rel="noopener noreferrer" class="text-sm font-semibold text-blue-600 hover:text-blue-800 flex items-center group">
+                                            Ver ficha del proyecto 
+                                            <svg class="w-4 h-4 ml-1 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                                        </a>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-
-                        <!-- ZONA DE DOCUMENTOS -->
-                        <div class="bg-gray-50/50 p-6 md:p-8">
-                            <div class="flex items-center justify-between mb-6">
-                                <h3 class="text-sm font-bold text-gray-900 flex items-center uppercase tracking-wide">
-                                    <svg class="w-5 h-5 mr-2 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    Documentación Disponible
+                            
+                            <!-- ZONA DOCUMENTOS -->
+                            <div class="p-8 bg-gray-50/50">
+                                <h3 class="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4 flex items-center">
+                                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                    Documentación Privada
                                 </h3>
-                                <span class="bg-white border border-gray-200 text-gray-500 py-1 px-3 rounded-lg text-xs font-medium shadow-sm">
-                                    {proyecto.documentos_privados?.length || 0} Archivos
-                                </span>
-                            </div>
 
-                            {proyecto.documentos_privados && proyecto.documentos_privados.length > 0 ? (
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                    {proyecto.documentos_privados.map((doc: any) => {
-                                        const iconStyle = getFileStyle(doc.ext);
-                                        const docUrl = doc.url.startsWith('http') ? doc.url : STRAPI_URL + doc.url;
-
-                                        return (
-                                            <div class="flex items-center justify-between p-4 bg-white border border-gray-200 rounded-xl hover:border-blue-400 hover:shadow-md transition-all group h-full cursor-default">
-                                                <div class="flex items-center gap-4 overflow-hidden">
-                                                    <div class={`w-12 h-12 flex-shrink-0 flex items-center justify-center rounded-lg ${iconStyle} bg-opacity-20`}>
-                                                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"></path></svg>
-                                                    </div>
-                                                    
-                                                    <div class="min-w-0 flex-1">
-                                                        <p class="font-bold text-gray-900 text-sm truncate mb-1" title={doc.name}>
-                                                            {doc.name}
-                                                        </p>
-                                                        <div class="flex items-center text-xs text-gray-400">
-                                                            <span class="uppercase font-semibold tracking-wider">{doc.ext?.replace('.', '')}</span>
-                                                            <span class="mx-2">•</span> 
-                                                            <span>{Math.round(doc.size)} KB</span>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <a 
-                                                    href={docUrl} 
+                                {docs.length > 0 ? (
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {docs.map((doc: any) => {
+                                            const safeUrl = getSafeDocUrl(doc?.url);
+                                            if (!safeUrl || !doc?.filename) return null;
+                                            const iconClass = getFileStyle(doc.mime_type, doc.filename);
+                                            const docTitle = sanitizeWPText(doc?.title);
+                                            return (
+                                                <a
+                                                    class="flex items-center justify-between p-3 bg-white border border-gray-200 rounded-xl hover:border-blue-300 hover:shadow-md transition-all group cursor-pointer"
+                                                    href={safeUrl}
                                                     target="_blank"
                                                     rel="noopener noreferrer"
-                                                    class="ml-3 p-2.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-                                                    title="Descargar documento"
                                                 >
-                                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                    <div class="flex items-center gap-3 overflow-hidden">
+                                                        <div class={`w-10 h-10 flex-shrink-0 flex items-center justify-center rounded-lg ${iconClass} bg-opacity-20`}>
+                                                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                                                        </div>
+                                                        <div class="min-w-0 flex-1">
+                                                            <p class="font-bold text-gray-900 text-sm truncate group-hover:text-blue-600 transition-colors" title={docTitle}>{docTitle}</p>
+                                                            <div class="flex items-center text-xs text-gray-400 mt-0.5">
+                                                                <span class="font-semibold">{getExtension(doc.filename)}</span>
+                                                                <span class="mx-1.5">•</span>
+                                                                <span>{getSize(doc.filesize)}</span>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="text-gray-300 group-hover:text-blue-500 transition-colors">
+                                                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+                                                    </div>
                                                 </a>
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            ) : (
-                                <div class="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-200 rounded-xl bg-gray-50/50">
-                                    <svg class="w-12 h-12 text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                                    <p class="text-gray-500 text-sm font-medium">No hay documentación disponible.</p>
-                                    <p class="text-gray-400 text-xs mt-1">Vuelve a consultar más tarde.</p>
-                                </div>
-                            )}
-                        </div>
+                                            )
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div class="text-center py-6 border-2 border-dashed border-gray-200 rounded-xl bg-white opacity-75">
+                                        <p class="text-gray-400 text-sm">No hay documentos disponibles para descargar.</p>
+                                    </div>
+                                )}
+                            </div>
 
-                    </article>
-                ))}
-            </div>
-        )}
-
-    </main>
-
-    <Footer />
-
-  </body>
-</html>
+                        </article>
+                        );
+                    })}
+                </div>
+            )}
+        </div>
+    </div>
+</Layout>

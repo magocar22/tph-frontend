@@ -20,8 +20,11 @@ pnpm-debug.log*
 # macOS-specific files
 .DS_Store
 
+# VSCode setting folder
+.vscode/
+
 # jetbrains setting folder
 .idea/
 
-# Local Netlify folder
-.netlify
+# Cloudflare
+.wrangler/

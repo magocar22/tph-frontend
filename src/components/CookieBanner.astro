@@ -7,7 +7,7 @@
     
     <div class="text-sm text-gray-600 flex-1">
       <p>
-        Usamos cookies propias y de terceros para analizar el tráfico. 
+        Usamos cookies para mejorar tu experiencia y analizar el tráfico de la web. 
         Puedes leer más en nuestra <a href="/cookies" class="text-blue-600 underline hover:text-blue-800">Política de Cookies</a>.
       </p>
     </div>
@@ -25,59 +25,77 @@
 </div>
 
 <script is:inline>
-  // Lógica simple para mostrar/ocultar y guardar preferencia
+  // ==========================================
+  // 📍 ZONA DE CONFIGURACIÓN DE ANALYTICS
+  // ==========================================
+  
+  // 1. Cuando tengas el ID (ej: 'G-12345678'), ponlo dentro de las comillas.
+  // 2. Mientras esté vacío (""), Analytics NO se cargará nunca.
+  const GA_ID = ""; 
+
+  // ==========================================
+  // ⚙️ LÓGICA DEL BANNER (NO TOCAR)
+  // ==========================================
+
   const banner = document.getElementById('cookie-banner');
   const btnAccept = document.getElementById('cookie-accept');
   const btnReject = document.getElementById('cookie-reject');
 
-  // Comprobar si ya decidió antes
-  if (!localStorage.getItem('cookieConsent')) {
-    // Si no ha decidido, mostramos el banner (quitamos el hidden y subimos)
-    banner.classList.remove('hidden');
-    setTimeout(() => {
-        banner.classList.remove('translate-y-full');
-    }, 100);
-  } else {
-    // Si ya aceptó, cargamos los scripts de tracking aquí
-    if (localStorage.getItem('cookieConsent') === 'accepted') {
-        loadAnalytics();
+  // Función principal: Carga Google Analytics dinámicamente
+  function loadAnalytics() {
+    if (!GA_ID) {
+      console.warn("⚠️ Google Analytics no se cargó: Falta el ID en CookieBanner.astro");
+      return;
     }
+
+    // Evitamos cargar el script dos veces
+    if (document.getElementById('ga-script')) return;
+
+    console.log("🚀 Cargando Google Analytics: " + GA_ID);
+
+    // 1. Crear e inyectar el script de Google
+    const script = document.createElement('script');
+    script.id = 'ga-script';
+    script.src = `https://www.googletagmanager.com/gtag/js?id=${GA_ID}`;
+    script.async = true;
+    document.head.appendChild(script);
+    
+    // 2. Inicializar el dataLayer
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', GA_ID);
   }
 
-  // AL ACEPTAR
+  // Comprobar historial al entrar en la web
+  const consent = localStorage.getItem('cookieConsent');
+  
+  if (!consent) {
+    // Si no ha decidido, mostramos el banner
+    banner.classList.remove('hidden');
+    // Pequeño delay para que la animación de "deslizar hacia arriba" se vea suave
+    setTimeout(() => banner.classList.remove('translate-y-full'), 100);
+  } else if (consent === 'accepted') {
+    // Si ya aceptó anteriormente, cargamos Analytics directamente
+    loadAnalytics();
+  }
+
+  // EVENTO: Click en ACEPTAR
   btnAccept.addEventListener('click', () => {
     localStorage.setItem('cookieConsent', 'accepted');
     closeBanner();
-    loadAnalytics(); // Cargamos Google Analytics
+    loadAnalytics(); // Aquí empieza la magia
   });
 
-  // AL RECHAZAR
+  // EVENTO: Click en RECHAZAR (Solo funcionales)
   btnReject.addEventListener('click', () => {
     localStorage.setItem('cookieConsent', 'rejected');
     closeBanner();
+    // No cargamos analytics. Cumplimiento estricto RGPD.
   });
 
   function closeBanner() {
     banner.classList.add('translate-y-full');
-    setTimeout(() => {
-        banner.classList.add('hidden');
-    }, 500);
-  }
-
-  // AQUÍ ES DONDE PEGARÍAS EL CÓDIGO DE GOOGLE ANALYTICS
-  function loadAnalytics() {
-    console.log("Cargando Google Analytics...");
-    // Ejemplo de cómo inyectar GA4 dinámicamente:
-    /*
-    const script = document.createElement('script');
-    script.src = "https://www.googletagmanager.com/gtag/js?id=TU-ID-GA4";
-    script.async = true;
-    document.head.appendChild(script);
-    
-    window.dataLayer = window.dataLayer || [];
-    function gtag(){dataLayer.push(arguments);}
-    gtag('js', new Date());
-    gtag('config', 'TU-ID-GA4');
-    */
+    setTimeout(() => banner.classList.add('hidden'), 500);
   }
 </script>

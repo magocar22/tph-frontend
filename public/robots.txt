@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+
+# Bloqueamos el dashboard por si acaso el sitemap falla
+Disallow: /inversores/dashboard
+Disallow: /api/
+
+# Le decimos a Google dónde está el mapa
+Sitemap: https://tuprimerhogar.es/sitemap-index.xml

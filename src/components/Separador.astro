@@ -1,0 +1,29 @@
+---
+// src/components/Separador.astro
+---
+<div class="relative py-16 md:py-20"> <!-- He ajustado un poco el py para que sea compacto -->
+
+    <!-- LÍNEA DE FONDO -->
+    <div class="absolute inset-0 flex items-center" aria-hidden="true">
+    <!-- Cambié border-t-2 a border-t para que la línea sea más fina (1px) y elegante -->
+        <div class="w-full border-t border-[#0025A7] opacity-20"></div>
+    </div>
+
+    <!-- INSIGNIA CENTRADA -->
+    <div class="relative flex justify-center">
+    
+    <!-- 
+    AQUÍ ESTÁN LOS CAMBIOS DE TAMAÑO:
+    1. p-2 (antes p-3): Reduce el tamaño general del cuadrado azul.
+    2. border-2 (antes border-4): Hace el marco blanco más fino.
+    -->
+        <div class="bg-[#0025A7] p-1.5 transform rotate-45 shadow-md border-2 border-white z-10">
+            
+            <!-- 
+            3. w-2 h-2 (antes w-3 h-3): Reduce el punto blanco del centro.
+            -->
+            <div class="w-1.5 h-1.5 bg-white rounded-full"></div>
+            
+        </div>
+    </div>
+</div>

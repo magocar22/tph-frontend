@@ -1,56 +1,33 @@
 ---
 // src/pages/contacto.astro
-import BaseHead from '../components/BaseHead.astro';
-import Navbar from '../components/Navbar.astro';
+import Layout from "../layouts/Layout.astro";
 import ContactoForm from '../components/Contacto.astro';
-import Footer from '../components/Footer.astro';
+import PageHeader from '../components/PageHeader.astro';
 
 // Assets
-import imgFondo from '../assets/pareja-suelo.jpg'; 
+import imgFondo from '../assets/contacto-tph.webp'; 
+
+// SEO Props
+const seoTitle = "Contacto | Tu Primer Hogar";
+const seoDesc = "Estamos aquí para ayudarte. Contacta con nosotros para resolver tus dudas sobre el alquiler con derecho a compra.";
 ---
 
-<html lang="es">
-  <head>
-    <BaseHead 
-      title="Contacto | Tu Primer Hogar" 
-      description="Estamos aquí para ayudarte. Contacta con nosotros para resolver tus dudas sobre el alquiler con opción a compra." 
+<Layout
+  title={seoTitle}
+  description={seoDesc}
+  navbarTransparent={true}
+>
+    <!-- HERO SECTION -->
+    <PageHeader 
+        backgroundImage={imgFondo}
+        title="Contacto"
+        subtitle="Estamos aquí para ayudarte a conseguir tu hogar"
+        classes="h-[40vh] min-h-[300px] pt-16"
+        overlayClasses="bg-blue-900/70"
     />
-  </head>
-  <body class="bg-gray-50">
-    
-    <!-- 
-      MENÚ DE NAVEGACIÓN 
-      Lo ponemos transparente para que se fusione con la foto de abajo
-    -->
-    <Navbar isTransparent={true} />
-
-    <!-- 
-      CABECERA "MINI HERO" 
-    -->
-    <header class="relative h-[40vh] min-h-[300px] flex flex-col items-center justify-center bg-cover bg-center" style={`background-image: url('${imgFondo.src}');`}>
-        
-        <!-- Capa oscura -->
-        <div class="absolute inset-0 bg-blue-900/60"></div>
-
-        <!-- TÍTULO DE LA PÁGINA (Centrado) -->
-        <div class="relative z-10 text-center px-4 mt-10"> <!-- mt-10 para compensar el espacio del menú -->
-            <h1 class="text-4xl md:text-6xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
-                Contacto
-            </h1>
-            <p class="text-blue-100 text-lg mt-4 max-w-xl mx-auto font-light">
-                Estamos aquí para ayudarte a conseguir tu hogar
-            </p>
-        </div>
-
-    </header>
 
     <!-- CONTENIDO PRINCIPAL -->
-    <main>
-        <!-- Formulario completo (sin modo simple) -->
-        <ContactoForm />
-    </main>
+    <!-- El Layout ya incluye la etiqueta <main>, así que inyectamos el formulario directamente -->
+    <ContactoForm />
 
-    <Footer />
-
-  </body>
-</html>
+</Layout>

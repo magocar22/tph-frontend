@@ -1,0 +1,42 @@
+---
+const {
+  title = "Contenido temporalmente no disponible",
+  message = "Esta sección no está operativa en este momento. Estamos trabajando para restablecer el servicio lo antes posible.",
+  hint = "Mientras tanto, puedes seguir navegando por el resto de la web.",
+} = Astro.props;
+---
+
+<section class="mx-auto max-w-3xl">
+  <div class="rounded-3xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+    <div class="mx-auto mb-8 flex h-20 w-20 items-center justify-center rounded-full bg-[#0025A7]/10">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="h-10 w-10 text-[#0025A7]"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        aria-hidden="true"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="1.8"
+          d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+      </svg>
+    </div>
+
+    <h1 class="text-3xl font-semibold tracking-tight text-gray-900">
+      {title}
+    </h1>
+
+    <p class="mt-6 text-lg leading-relaxed text-gray-600">
+      {message}
+    </p>
+
+    <p class="mt-2 text-gray-500">
+      {hint}
+    </p>
+
+  </div>
+</section>

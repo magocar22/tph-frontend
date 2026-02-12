@@ -1,101 +1,108 @@
 ---
-import { Image } from 'astro:assets';
-import BaseHead from '../../components/BaseHead.astro';
-import Navbar from '../../components/Navbar.astro';
-import Footer from '../../components/Footer.astro';
-import imgCabecera from '../../assets/fondo-salon.jpg';
-import fetchApi from '../../lib/strapi';
+// ../src/pages/blog/index.astro 
+import Layout from "../../layouts/Layout.astro";
+import { Image } from "astro:assets";
+import imgCabecera from "../../assets/noticias-actualidad.webp";
+import PageHeader from "../../components/PageHeader.astro";
+import NoDisponible from "../../components/NoDisponible.astro";
+import { fetchWP } from "../../lib/wordpress";
+import { sanitizeWPText } from "../../lib/sanitize";
 
-const posts = await fetchApi<any[]>({
-  endpoint: 'noticias',
-  query: {
-    populate: '*', 
-    sort: 'fecha:desc',
-  },
-});
+let wpPosts: any[] = [];
+let wpAvailable = true;
 
-// Importante: Leemos la URL del backend desde el entorno
-const STRAPI_URL = import.meta.env.PUBLIC_STRAPI_URL || "http://127.0.0.1:1337";
+try {
+  wpPosts = await fetchWP<any[]>({
+    endpoint: "posts",
+    params: { per_page: "12", _embed: "true" },
+  });
+} catch (err) {
+  console.error("[/blog] WP no disponible:", err);
+  wpAvailable = false;
+}
+
+const posts = wpAvailable ? wpPosts.map((post) => {
+  let imagenUrl = post?._embedded?.["wp:featuredmedia"]?.[0]?.source_url ?? null;
+  let nombreCategoria = post?._embedded?.["wp:term"]?.[0]?.[0]?.name ?? "Actualidad";
+  
+  return {
+    slug: post.slug,
+    titulo: sanitizeWPText(post?.title?.rendered ?? "Sin título"),
+    descripcion: (post?.excerpt?.rendered ?? "").replace(/<[^>]*>?/gm, "").trim(),
+    fecha: new Date(post.date),
+    categoria: nombreCategoria,
+    imagen: imagenUrl,
+  };
+}) : [];
 ---
 
-<html lang="es">
-  <head>
-    <BaseHead title="Actualidad | Tu Primer Hogar" description="Novedades corporativas." />
-  </head>
-  <body class="bg-gray-50 font-sans text-gray-800">
-    
-    <Navbar isTransparent={true} />
+<Layout 
+  title="Actualidad | Tu Primer Hogar" 
+  description="Novedades corporativas y noticias sobre el acceso a la vivienda."
+  navbarTransparent={true}
+>
+  <!-- HERO SECTION -->
+  <PageHeader
+    backgroundImage={imgCabecera}
+    title="Actualidad"
+    subtitle="Te contamos nuestras últimas novedades."
+    classes="h-[40vh] min-h-[300px] pt-16"
+    overlayClasses="bg-blue-900/60"
+  />
 
-    <header class="relative h-[35vh] min-h-[300px] flex flex-col justify-center items-center bg-cover bg-center" style={`background-image: url('${imgCabecera.src}');`}>
-        <div class="absolute inset-0 bg-blue-900/70"></div>
-        <div class="relative z-10 text-center px-4 pt-16">
-            <h1 class="text-4xl md:text-5xl font-bold text-white tracking-wider uppercase drop-shadow-lg">
-                Actualidad
-            </h1>
-        </div>
-    </header>
-
-    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+    {wpAvailable ? (
+      <>
         {posts.length === 0 && (
-            <div class="text-center py-20 text-gray-500">
-                <p>No hay noticias publicadas aún.</p>
-            </div>
+          <div class="text-center py-20 text-gray-500">
+            <p>No hay noticias publicadas aún.</p>
+          </div>
         )}
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-            {posts.map((post) => {
-                // --- LÓGICA INTELIGENTE DE IMAGEN ---
+          {posts.map((post) => (
+            <a href={`/blog/${post.slug}`} class="group block bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden hover:-translate-y-1">
+              <div class="h-56 overflow-hidden relative bg-gray-100">
+                {post.imagen ? (
+                  <Image 
+                    src={post.imagen} 
+                    alt={post.titulo}
+                    inferSize={true}
+                    width={600}
+                    height={400}
+                    format="webp"
+                    class="w-full h-full object-cover transition-transform duration-500"
+                    loading="lazy"
+                  />
+                ) : (
+                  <div class="w-full h-full flex items-center justify-center text-gray-400">Sin imagen</div>
+                )}
+                <span class="absolute top-4 left-4 bg-white/90 backdrop-blur text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">
+                  {post.categoria}
+                </span>
+              </div>
 
-                let imgSrc = null;
-                if (post.imagen) {
-                    imgSrc = post.imagen.url.startsWith('http') 
-                        ? post.imagen.url 
-                        : STRAPI_URL + post.imagen.url;
-                }
-                // ------------------------------------
-
-                return (
-                <a href={`/blog/${post.slug}`} class="group block bg-white rounded-3xl shadow-sm hover:shadow-xl transition-all duration-300 border border-gray-100 overflow-hidden hover:-translate-y-1">
-                    
-                    <div class="h-56 overflow-hidden relative">
-                        {imgSrc ? (
-                            <Image 
-                                src={imgSrc} 
-                                alt={post.titulo} 
-                                width={600}
-                                height={400}
-                                class="w-full h-full object-cover" 
-                            />
-                        ) : (
-                            <div class="w-full h-full bg-gray-200 flex items-center justify-center text-gray-400">Sin imagen</div>
-                        )}
-
-                        <span class="absolute top-4 left-4 bg-white/90 backdrop-blur text-blue-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide shadow-sm">
-                            {post.categoria}
-                        </span>
-                    </div>
-                    
-                    <div class="p-8">
-                        <div class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">
-                            {new Date(post.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}
-                        </div>
-                        <h2 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">
-                            {post.titulo}
-                        </h2>
-                        <p class="text-gray-600 line-clamp-3 text-sm leading-relaxed">
-                            {post.descripcion}
-                        </p>
-                        <div class="mt-6 flex items-center text-blue-600 font-bold text-sm">
-                            Leer noticia 
-                            <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
-                        </div>
-                    </div>
-                </a>
-            )})}
+              <div class="p-8">
+                <div class="text-gray-400 text-xs font-bold uppercase tracking-widest mb-3">
+                  {post.fecha.toLocaleDateString("es-ES", { year: "numeric", month: "long", day: "numeric" })}
+                </div>
+                <h2 class="text-xl font-bold text-gray-900 mb-3 group-hover:text-blue-600 transition-colors line-clamp-2">{post.titulo}</h2>
+                <p class="text-gray-600 line-clamp-3 text-sm leading-relaxed">{post.descripcion}</p>
+                <div class="mt-6 flex items-center text-blue-600 font-bold text-sm">
+                  Leer noticia <svg class="w-4 h-4 ml-2 transform group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 8l4 4m0 0l-4 4m4-4H3"></path></svg>
+                </div>
+              </div>
+            </a>
+          ))}
         </div>
-    </main>
-
-    <Footer />
-  </body>
-</html>
+      </>
+    ) : (
+      <NoDisponible 
+        title="Actualidad temporalmente no disponible"
+        message="Estamos trabajando para restablecer el servicio lo antes posible."
+        primaryHref="/"
+        primaryLabel="Volver al inicio"
+      />
+    )}
+  </main>
+</Layout>

@@ -1,5 +1,6 @@
 ---
 import { Image } from 'astro:assets';
+// Importamos las imágenes desde la carpeta assets
 import imgCasa from '../assets/modelo-imagen.png';
 ---
 
@@ -9,7 +10,7 @@ import imgCasa from '../assets/modelo-imagen.png';
     <!-- TÍTULO -->
     <div class="text-center mb-16">
       <h2 class="text-3xl md:text-4xl font-bold text-blue-600">
-        Un modelo de alquiler e inversión con impacto social
+        ¿ Cómo es posible ?
       </h2>
     </div>
 
@@ -18,27 +19,19 @@ import imgCasa from '../assets/modelo-imagen.png';
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
       
       <!-- 1. TARJETA IZQUIERDA -->
-      <!-- h-full: Obliga a la tarjeta a ocupar toda la altura disponible de la fila -->
       <div class="h-full bg-white border-2 border-blue-500 rounded-3xl p-8 shadow-lg flex flex-col justify-center text-center lg:text-left hover:shadow-xl transition-shadow">
         <h3 class="text-xl font-bold text-blue-600 mb-4">
-          Tu alquiler se convierte en visión a largo plazo
+          Sensibilidad social
         </h3>
         <p class="text-gray-600 leading-relaxed">
-          El precio está fijado desde el primer día garantizando el valor a corto y largo plazo.
+          Tu Primer Hogar trata de dar respuesta al acuciante problema de acceso a la vivienda. Está impulsado por un grupo empresarial con un firme compromiso social: ofrecer un modelo de alquiler con derecho a compra que asegure precios justos, transparencia y beneficios reales para los inquilinos.
         </p>
       </div>
 
       <!-- 2. IMAGEN CENTRAL (PNG TRANSPARENTE) -->
-      <!-- 
-         flex items-center justify-center: Centra la casa vertical y horizontalmente.
-         py-8: Un poco de aire arriba y abajo en móvil.
-      -->
+
       <div class="flex items-center justify-center py-6 lg:py-0 relative z-10">
-        <!-- 
-           w-auto h-auto: Mantiene la proporción original.
-           max-h-[350px]: Ponemos un límite de altura para que no se vuelva gigante si la pantalla es muy ancha.
-           drop-shadow-xl: Añade una sombra bonita al contorno de la casa (respeta la transparencia del PNG).
-        -->
+
         <Image 
           src={imgCasa} 
           alt="Casa independiente moderna" 
@@ -49,10 +42,10 @@ import imgCasa from '../assets/modelo-imagen.png';
       <!-- 3. TARJETA DERECHA -->
       <div class="h-full bg-white border-2 border-blue-500 rounded-3xl p-8 shadow-lg flex flex-col justify-center text-center lg:text-left hover:shadow-xl transition-shadow">
         <h3 class="text-xl font-bold text-blue-600 mb-4">
-          Inversión con propósito y retorno medible
+          Modelo de construcción responsable
         </h3>
         <p class="text-gray-600 leading-relaxed">
-          La propiedad se disfruta desde el primer día aportando seguridad en los planes personales o familiares del inquilino, futuro propietario.
+          Este proyecto se aleja del planteamiento especulativo del sector, adoptando una fórmula de gestión responsable que combina la rentabilidad económica con una visión social demostrando que la inversión inmobiliaria también puede reportar beneficios a la sociedad.
         </p>
       </div>
 

@@ -3,20 +3,19 @@
 import BaseHead from '../../components/BaseHead.astro';
 import Navbar from '../../components/Navbar.astro';
 import { Image } from 'astro:assets';
-import imgFondo from '../../assets/edificio-1.jpg'; 
+import imgFondo from '../../assets/edificio-alfil.webp'; 
 ---
 
 <html lang="es">
-  <head>
+<head>
     <BaseHead 
-      title="Acceso Inversores | Tu Primer Hogar" 
-      description="Área privada." 
+    title="Acceso Inversores | Tu Primer Hogar" 
+    description="Área privada exclusiva para inversores y accionistas." 
     />
-  </head>
-  <!-- Body base -->
-  <body class="bg-gray-900 min-h-screen relative font-sans">
+</head>
+<body class="bg-gray-900 min-h-screen relative font-sans">
     
-    <!-- NAVBAR (z-50 para estar siempre encima) -->
+    <!-- NAVBAR -->
     <Navbar isTransparent={true} />
 
     <!-- FONDO -->
@@ -29,16 +28,10 @@ import imgFondo from '../../assets/edificio-1.jpg';
         <div class="absolute inset-0 bg-gray-900/70 backdrop-blur-sm"></div>
     </div>
 
-    <!-- 
-       CONTENEDOR PRINCIPAL
-       CAMBIO AQUÍ:
-       - pt-32: Padding Top de 128px. Esto empuja todo el contenido hacia abajo
-         lo suficiente para librar el menú y el logo.
-       - flex-col: Asegura el orden vertical.
-    -->
+    <!-- CONTENEDOR PRINCIPAL -->
     <main class="relative z-10 min-h-screen flex flex-col items-center justify-center px-4 pt-32 pb-12">
 
-        <!-- TARJETA -->
+        <!-- TARJETA DE LOGIN -->
         <div class="w-full max-w-[420px] bg-white rounded-2xl shadow-2xl overflow-hidden ring-1 ring-white/10">
             
             <!-- Encabezado -->
@@ -61,6 +54,7 @@ import imgFondo from '../../assets/edificio-1.jpg';
                             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>
                             </div>
+                            <!-- Importante: id="usuario" se usa en el script -->
                             <input type="text" id="usuario" required class="pl-10 w-full px-4 py-3 rounded-lg bg-gray-50 border border-gray-300 text-gray-900 focus:ring-2 focus:ring-blue-500 outline-none transition-all" placeholder="usuario">
                         </div>
                     </div>
@@ -75,6 +69,7 @@ import imgFondo from '../../assets/edificio-1.jpg';
                         </div>
                     </div>
 
+                    <!-- Mensaje de Error (Oculto por defecto) -->
                     <div id="error-msg" class="hidden p-3 rounded-lg bg-red-50 text-red-600 text-sm text-center border border-red-100 flex items-center justify-center gap-2">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                         <span>Usuario o contraseña incorrectos</span>
@@ -85,7 +80,7 @@ import imgFondo from '../../assets/edificio-1.jpg';
                     </button>
                     
                     <div class="text-center pt-4">
-                        <a href="#" class="text-xs text-gray-500 hover:text-blue-600 transition-colors">¿Has olvidado tu contraseña?</a>
+                        <a href="mailto:info@tuprimerhogar.es" class="text-xs text-gray-500 hover:text-blue-600 transition-colors">¿Has olvidado tu contraseña?</a>
                     </div>
 
                 </form>
@@ -102,16 +97,27 @@ import imgFondo from '../../assets/edificio-1.jpg';
 
     <div class="fixed bottom-4 w-full text-center z-20 pointer-events-none">
         <p class="text-xs text-gray-400/80">
-            &copy; {new Date().getFullYear()} Tu Primer Hogar. Conexión cifrada SSL.
+            &copy; {new Date().getFullYear()} Tu Primer Hogar | Conexión segura
         </p>
     </div>
 
-<!-- SCRIPT REAL CONECTADO A STRAPI -->
+    <!-- ESTILOS EXTRA PARA ANIMACIÓN DE ERROR -->
+    <style>
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
+            20%, 40%, 60%, 80% { transform: translateX(4px); }
+        }
+        .animate-shake {
+            animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
+        }
+    </style>
+
+    <!-- SCRIPT DE LOGIN (Conectado a WordPress mediante Proxy) -->
     <script is:inline>
         const form = document.getElementById('login-form');
         const errorMsg = document.getElementById('error-msg');
-        const errorText = errorMsg.querySelector('span'); // Para cambiar el texto del error
-
+        
         if(form) {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
@@ -121,42 +127,44 @@ import imgFondo from '../../assets/edificio-1.jpg';
                 const btn = form.querySelector('button');
 
                 // Estado de carga
+                const textoOriginal = btn.innerHTML;
                 btn.innerHTML = "Verificando...";
                 btn.disabled = true;
                 errorMsg.classList.add('hidden');
 
                 try {
-                    // Llamamos a NUESTRA API de Astro (la que creamos en el paso 3)
+                    // Enviamos los datos a NUESTRA API LOCAL (/api/login.ts)
+                    // Esta API se encargará de hablar con WordPress
                     const response = await fetch('/api/login', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
+                        // 'identifier' se mapea a 'username' en el backend
                         body: JSON.stringify({ identifier: usuario, password: pass })
                     });
 
                     const result = await response.json();
 
                     if (response.ok) {
-                        // ÉXITO: Astro ya ha puesto la cookie, solo redirigimos
+                        // Login correcto: Redirigimos al Dashboard
                         window.location.href = '/inversores/dashboard';
                     } else {
-                        // ERROR
                         throw new Error(result.message || "Error de acceso");
                     }
 
                 } catch (err) {
-                    // Mostrar error
+                    // Login fallido: Mostramos error y animación
+                    console.error(err);
                     errorMsg.classList.remove('hidden');
-                    // Actualizar texto del error si quieres (opcional)
-                    // errorText.innerText = err.message; 
                     
+                    // Añadir animación de temblor al formulario
                     form.classList.add('animate-shake');
                     setTimeout(() => form.classList.remove('animate-shake'), 500);
                     
-                    btn.innerHTML = "Acceder";
+                    btn.innerHTML = textoOriginal;
                     btn.disabled = false;
                 }
             });
         }
     </script>
-  </body>
+</body>
 </html>

@@ -1,0 +1,311 @@
+---
+import BaseHead from '../components/BaseHead.astro';
+import Navbar from '../components/Navbar.astro';
+import Footer from '../components/Footer.astro';
+import PageHeader from '../components/PageHeader.astro';
+import imgHeader from '../assets/distrito-financiero.webp'; 
+import { WP_URL } from '../lib/wordpress';
+
+const FORM_ID = "fd93142"; // Tu ID de CF7
+const API_URL = WP_URL.replace(/\/$/, '');
+---
+
+<html lang="es">
+<head>
+    <BaseHead title="Estudio de Solvencia | TPH" description="Formulario de recogida de documentación económica." />
+</head>
+<body class="bg-gray-50">
+    <Navbar isTransparent={true} />
+
+    <PageHeader 
+        backgroundImage={imgHeader} 
+        title="Estudio de Solvencia" 
+        subtitle="Analizamos tu perfil para tu futuro alquiler con derecho a compra."
+        classes="h-[40vh] min-h-[300px] pt-32 pb-14 md:pt-16 md:pb-0"
+        overlayClasses="bg-blue-900/70"
+    />
+
+    <main class="max-w-4xl mx-auto px-4 py-16">
+        <div class="bg-white rounded-3xl shadow-xl p-6 md:p-12 border border-gray-100">
+            
+            <form id="solvencia-form" class="space-y-12">
+                
+                <!-- PROMOCIÓN -->
+                <section class="border-b border-gray-100 pb-8">
+                    <label class="block text-sm font-bold text-gray-700 mb-2">¿En qué promoción estás interesado?</label>
+                    <input type="text" name="promocion-vivienda" required placeholder="Ej: Edificio Ágora, Málaga Central..." class="form-input" />
+                </section>
+
+                <!-- SECCIÓN TITULAR 1 -->
+                <section class="space-y-8">
+                    <h2 class="text-xl font-bold text-blue-900 border-l-4 border-blue-600 pl-4">Titular Principal</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="field-group">
+                            <label>Nombre</label>
+                            <input type="text" name="nombre-1" required class="form-input" />
+                        </div>
+                        <div class="field-group">
+                            <label>Apellidos</label>
+                            <input type="text" name="apellidos-1" required class="form-input" />
+                        </div>
+                        <div class="field-group">
+                            <label>DNI / NIE</label>
+                            <input type="text" name="dni-1" required class="form-input" />
+                        </div>
+                        <div class="field-group">
+                            <label>Población</label>
+                            <input type="text" name="poblacion-1" required class="form-input" />
+                        </div>
+                        <div class="field-group md:col-span-2">
+                            <label>Domicilio completo</label>
+                            <input type="text" name="domicilio-1" required class="form-input" />
+                        </div>
+                        <div class="field-group">
+                            <label>Teléfono</label>
+                            <input type="tel" name="tel-1" required class="form-input" />
+                        </div>
+                        <div class="field-group">
+                            <label>Email</label>
+                            <input type="email" name="email-1" required class="form-input" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 bg-gray-50 p-6 rounded-2xl">
+                        <div class="field-group">
+                            <label>Situación Laboral</label>
+                            <select name="situacion-1" required class="form-input">
+                                <option value="">Seleccione...</option>
+                                <option value="Funcionario">Funcionario</option>
+                                <option value="Indefinido">Indefinido</option>
+                                <option value="Fijo Discontinuo">Fijo Discontinuo</option>
+                                <option value="Eventual">Eventual</option>
+                                <option value="Pensionista">Pensionista</option>
+                                <option value="Autónomo">Autónomo</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Antigüedad</label>
+                            <select name="antiguedad-1" required class="form-input">
+                                <option value="">Seleccione...</option>
+                                <option value="Menos de 1 año">Menos de 1 año</option>
+                                <option value="1">1 año</option>
+                                <option value="2">2 años</option>
+                                <option value="3">3 años</option>
+                                <option value="4">4 años</option>
+                                <option value="5">5 años</option>
+                                <option value="Más de 5 años">Más de 5 años</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Ingresos Netos Mes</label>
+                            <input type="number" name="ingresos-1" required placeholder="0.00 €" class="form-input" />
+                        </div>
+                        <div class="field-group">
+                            <label>Deudas Mensuales</label>
+                            <input type="number" name="deudas-1" required placeholder="0.00 €" class="form-input" />
+                        </div>
+                    </div>
+
+                    <!-- DOCUMENTACIÓN T1 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="file-upload-box">
+                            <label class="text-sm font-bold block mb-1">3 últimas nóminas / Renta</label>
+                            <p class="text-[10px] text-blue-600 font-bold uppercase mb-3">* Renta obligatoria para autónomos</p>
+                            <input type="file" name="nominas-1" required class="file-input" />
+                        </div>
+                        <div class="file-upload-box">
+                            <label class="text-sm font-bold block mb-1">Vida Laboral</label>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-3">Informe actualizado</p>
+                            <input type="file" name="vida-laboral-1" required class="file-input" />
+                        </div>
+                    </div>
+                </section>
+
+                <!-- BOTÓN TOGGLE TITULAR 2 -->
+                <div class="flex justify-center border-t border-gray-100 pt-8">
+                    <button type="button" id="toggle-second" class="flex items-center gap-2 text-blue-600 font-bold hover:bg-blue-600 hover:text-white px-6 py-3 rounded-full transition-all border-2 border-blue-600">
+                        <span id="toggle-icon">+</span> <span id="toggle-text">Añadir segundo titular</span>
+                    </button>
+                </div>
+
+                <!-- SECCIÓN TITULAR 2 (HIDDEN) -->
+                <section id="second-holder" class="hidden space-y-8 animate-fade-in border-t border-dashed border-gray-200 pt-10">
+                    <h2 class="text-xl font-bold text-blue-900 border-l-4 border-blue-600 pl-4">Segundo Titular</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="field-group">
+                            <label>Nombre</label>
+                            <input type="text" name="nombre-2" class="form-input" />
+                        </div>
+                        <div class="field-group">
+                            <label>Apellidos</label>
+                            <input type="text" name="apellidos-2" class="form-input" />
+                        </div>
+                        <div class="field-group">
+                            <label>DNI / NIE</label>
+                            <input type="text" name="dni-2" class="form-input" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 bg-gray-50 p-6 rounded-2xl">
+                        <div class="field-group">
+                            <label>Situación Laboral</label>
+                            <select name="situacion-2" class="form-input">
+                                <option value="">Seleccione...</option>
+                                <option value="Funcionario">Funcionario</option>
+                                <option value="Indefinido">Indefinido</option>
+                                <option value="Fijo Discontinuo">Fijo Discontinuo</option>
+                                <option value="Eventual">Eventual</option>
+                                <option value="Pensionista">Pensionista</option>
+                                <option value="Autónomo">Autónomo</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Antigüedad</label>
+                            <select name="antiguedad-2" class="form-input">
+                                <option value="">Seleccione...</option>
+                                <option value="Menos de 1 año">Menos de 1 año</option>
+                                <option value="1">1 año</option>
+                                <option value="2">2 años</option>
+                                <option value="3">3 años</option>
+                                <option value="4">4 años</option>
+                                <option value="5">5 años</option>
+                                <option value="Mas de 5 años">Más de 5 años</option>
+                            </select>
+                        </div>
+                        <div class="field-group">
+                            <label>Ingresos Netos Mes</label>
+                            <input type="number" name="ingresos-2" placeholder="0.00 €" class="form-input" />
+                        </div>
+                        <div class="field-group">
+                            <label>Deudas Mensuales</label>
+                            <input type="number" name="deudas-2" placeholder="0.00 €" class="form-input" />
+                        </div>
+                    </div>
+
+                    <!-- DOCUMENTACIÓN T2 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="file-upload-box">
+                            <label class="text-sm font-bold block mb-1">3 últimas nóminas T2 / Renta</label>
+                            <p class="text-[10px] text-blue-600 font-bold uppercase mb-3">* Renta obligatoria para autónomos</p>
+                            <input type="file" name="nominas-2" class="file-input" />
+                        </div>
+                        <div class="file-upload-box">
+                            <label class="text-sm font-bold block mb-1">Vida Laboral T2</label>
+                            <p class="text-[10px] text-gray-400 font-bold uppercase mb-3">Informe actualizado</p>
+                            <input type="file" name="vida-laboral-2" class="file-input" />
+                        </div>
+                    </div>
+                </section>
+
+                <!-- 4. BLOQUE LEGAL -->
+                <section class="bg-blue-900 text-white p-6 md:p-8 rounded-3xl space-y-6">
+                    <label class="flex items-start gap-4 cursor-pointer">
+                        <input type="checkbox" name="acceptance-privacidad" required class="mt-1 w-5 h-5 shrink-0 rounded border-gray-300 text-blue-600" />
+                        <span class="text-sm text-blue-100 leading-relaxed">
+                            Acepto la <a href="/politica-privacidad" target="_blank" class="underline hover:text-white">política de privacidad</a> y autorizo el tratamiento de mis datos para este estudio de solvencia.
+                        </span>
+                    </label>
+                    
+                    <label class="flex items-start gap-4 cursor-pointer">
+                        <input type="checkbox" name="acceptance-declaracion" required class="mt-1 w-5 h-5 shrink-0 rounded border-gray-300 text-blue-600" />
+                        <span class="text-sm text-blue-50 font-bold leading-relaxed">
+                            DECLARACIÓN JURADA: Declaro que ninguno de los titulares dispone de vivienda en propiedad. Entiendo que cualquier falsedad anulará la solicitud y autorizo a la empresa a emprender acciones legales por daños y perjuicios.
+                        </span>
+                    </label>
+                </section>
+
+                <button type="submit" id="btn-submit" class="w-full bg-blue-600 text-white font-bold py-5 rounded-2xl text-xl hover:bg-blue-700 transition-all shadow-xl">
+                    Enviar Solicitud de Estudio
+                </button>
+
+                <div id="form-result" class="hidden p-4 rounded-xl text-center font-bold"></div>
+
+            </form>
+        </div>
+    </main>
+
+    <Footer />
+
+    <style>
+        .field-group label {
+            @apply block text-xs font-bold text-gray-500 uppercase mb-2 ml-1;
+        }
+        .form-input {
+            @apply w-full px-4 py-3 rounded-xl bg-gray-50 border border-gray-200 outline-none focus:border-blue-500 focus:bg-white transition-all;
+        }
+        .file-upload-box {
+            @apply p-5 border-2 border-dashed border-gray-200 rounded-2xl hover:border-blue-400 transition-colors bg-white;
+        }
+        /* Fix para el input file en móvil */
+        .file-input {
+            @apply block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-full file:border-0
+            file:text-xs file:font-bold
+            file:bg-blue-600 file:text-white
+            hover:file:bg-blue-700
+            cursor-pointer;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 0.4s ease-out forwards;
+        }
+    </style>
+
+    <script is:inline define:vars={{ API_URL, FORM_ID }}>
+        const btnToggle = document.getElementById('toggle-second');
+        const secondHolder = document.getElementById('second-holder');
+        const toggleText = document.getElementById('toggle-text');
+        const toggleIcon = document.getElementById('toggle-icon');
+        const form = document.getElementById('solvencia-form');
+        const btnSubmit = document.getElementById('btn-submit');
+        const result = document.getElementById('form-result');
+
+        btnToggle.addEventListener('click', () => {
+            const isHidden = secondHolder.classList.contains('hidden');
+            if (isHidden) {
+                secondHolder.classList.remove('hidden');
+                toggleText.innerText = "Quitar segundo titular";
+                toggleIcon.innerText = "✖";
+            } else {
+                secondHolder.classList.add('hidden');
+                toggleText.innerText = "Añadir segundo titular";
+                toggleIcon.innerText = "+";
+                secondHolder.querySelectorAll('input, select').forEach(el => el.value = '');
+            }
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(form);
+            btnSubmit.disabled = true;
+            btnSubmit.innerHTML = "Subiendo documentos...";
+
+            try {
+                const response = await fetch(`${API_URL}/wp-json/contact-form-7/v1/contact-forms/${FORM_ID}/feedback`, {
+                    method: 'POST',
+                    body: formData
+                });
+                const data = await response.json();
+                if (data.status === 'mail_sent') {
+                    result.className = "p-4 rounded-xl text-center font-bold bg-green-100 text-green-700 block";
+                    result.innerText = "✅ Solicitud recibida correctamente.";
+                    form.reset();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else { throw new Error(data.message); }
+            } catch (err) {
+                result.className = "p-4 rounded-xl text-center font-bold bg-red-100 text-red-700 block";
+                result.innerText = "❌ Error. Verifique que los archivos no sean demasiado pesados.";
+            } finally {
+                btnSubmit.disabled = false;
+                btnSubmit.innerHTML = "Enviar Solicitud de Estudio";
+            }
+        });
+    </script>
+</body>
+</html>

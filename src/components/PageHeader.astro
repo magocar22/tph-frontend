@@ -1,0 +1,59 @@
+---
+import { Image } from 'astro:assets';
+
+interface Props {
+    title?: string;
+    subtitle?: string;
+    backgroundImage: ImageMetadata;
+    // Nuevas props opcionales para personalizar diseño
+    classes?: string;        // Para altura (ej: h-[40vh])
+    overlayClasses?: string; // Para el color de fondo (ej: bg-blue-900/70)
+}
+
+const { 
+    title, 
+    subtitle, 
+    backgroundImage, 
+    // Valores por defecto
+    classes = "h-[60vh] min-h-[500px]", 
+    overlayClasses = "bg-gray-900/70"
+} = Astro.props;
+---
+
+<!-- Usamos las clases dinámicas aquí -->
+<header class:list={["relative flex flex-col justify-center items-center overflow-hidden", classes]}>
+    
+    <!-- IMAGEN LCP OPTIMIZADA -->
+    <Image 
+        src={backgroundImage}
+        alt="" 
+        class="absolute inset-0 w-full h-full object-cover z-0"
+        loading="eager"
+        fetchpriority="high"
+    />
+
+    <!-- OVERLAY PERSONALIZABLE -->
+    <div class:list={["absolute inset-0 z-10", overlayClasses]}></div>
+
+    <!-- CONTENIDO -->
+    <div class="relative z-20 w-full px-4 mx-auto max-w-5xl h-full flex flex-col justify-center items-center text-center">
+    
+        {title ? (
+            <div>
+                <h1 class="text-4xl md:text-4xl lg:text-5xl font-bold text-white mb-4 uppercase tracking-wider drop-shadow-lg">
+                    {title}
+                </h1>
+                {subtitle && (
+                    <p class="text-blue-100 text-lg md:text-xl font-light max-w-2xl mx-auto mt-4">
+                        {subtitle}
+                    </p>
+                )}
+                <slot />
+            </div>
+        ) : (
+            <slot />
+        )}
+    
+    </div>
+
+</header>

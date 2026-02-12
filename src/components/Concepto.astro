@@ -1,63 +1,92 @@
 ---
 // src/components/Concepto.astro
 
-// Aquí definimos los datos de las tarjetas (Array de objetos)
-// Así es mucho más fácil editar los textos en el futuro sin tocar el HTML.
+// 1. Importamos el componente de imagen y las imágenes (Igual que en Inversion.astro)
+import { Image } from 'astro:assets';
+
+// Asumo que estas rutas existen según tu archivo de referencia
+import imgModelo from '../assets/modelo-general.webp';
+import imgDemanda from '../assets/demanda-real.webp';
+import imgPlusvalia from '../assets/plusvalia.webp';
+import imgValor from '../assets/valor-anadido.webp';
+
+// 2. Definimos los datos mezclando el CONTENIDO de Concepto con la ESTRUCTURA de Inversión
 const tarjetas = [
   {
     titulo: "Modelo General",
-    texto:
-      "Tu Primer Hogar es un programa de arrendamiento con derecho de compra, diseñado para ofrecer una salida planificada a la propiedad sin barreras financieras iniciales.",
+    texto: "Tu Primer Hogar es un programa de arrendamiento con derecho a compra, diseñado para ofrecer una opción de acceso a la vivienda sin barreras financieras iniciales.",
+    imagen: imgModelo, // Imagen asignada
+    destacado: false
   },
   {
     titulo: "Público Objetivo",
-    texto:
-      "Jóvenes con ingresos estables pero sin capacidad de ahorro para entrada. Se prioriza la estabilidad laboral y la voluntad de permanencia.",
+    texto: "Jóvenes con ingresos estables que, aunque desean adquirir una vivienda propia, su capacidad económica no les permite ahorrar para una entrada inicial.",
+    imagen: imgDemanda,
+    destacado: true // He puesto este destacado para imitar el diseño de Inversión
   },
   {
     titulo: "Cómo Funciona",
-    texto:
-      "El precio de venta se fija desde el inicio y parte del alquiler pagado genera un descuento futuro. Se suma fidelización, estabilidad y planificación.",
+    texto: "El precio de venta de la casa se establece desde el inicio y se mantendrá fijo incluso aunque se produzcan variaciones del mercado inmobiliario. En el momento de la compra, se descuenta parte del alquiler pagado. Esta formula combina fidelización, estabilidad y planificación.",
+    imagen: imgPlusvalia,
+    destacado: false
   },
   {
     titulo: "Valor Añadido",
-    texto:
-      "Una solución rentable para el usuario y segura para el inversor. Promueve sostenibilidad, comunidad y compromiso sin hipotecar el futuro.",
+    texto: "Tu Primer Hogar es una solución beneficiosa para el inquilino de hoy y propietario de mañana. Para el inversor, es una oportunidad segura. Promueve sostenibilidad, comunidad y compromiso sin hipotecar el futuro.",
+    imagen: imgValor, 
+    destacado: false
   },
 ];
 ---
 
-<section id="modelo" class="py-20 md:py-32 bg-white scroll-mt-20">
+<!-- Se mantiene el ID y el scroll-mt del original para la navegación, pero con el estilo bg-gray-50 del diseño nuevo -->
+<section id="modelo" class="py-20 md:py-32 bg-gray-50 scroll-mt-20">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <!-- CABECERA DE LA SECCIÓN -->
-    <div class="text-center mb-12">
+    
+    <!-- CABECERA (Texto original de Concepto.astro) -->
+    <div class="text-center mb-16">
       <h2 class="text-3xl md:text-4xl font-bold text-blue-600 mb-4">
-        El Concepto
+        Un sistema innovador
       </h2>
       <p class="text-gray-600 text-lg max-w-2xl mx-auto">
-        Un nuevo modelo de acceso a la vivienda para jóvenes con visión de
-        futuro.
+        Una nueva formula de acceso a la vivienda para jóvenes con visión de futuro.
       </p>
     </div>
 
-    <!-- REJILLA (GRID) DE TARJETAS -->
-    <!-- 
-      grid-cols-1: 1 columna en móvil.
-      md:grid-cols-2: 2 columnas en tablet.
-      lg:grid-cols-4: 4 columnas en PC.
-      gap-6: Espacio entre tarjetas.
-    -->
+    <!-- REJILLA (Adaptada para 4 columnas como en el contenido original, pero con estilo de Inversión) -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-      {
-        tarjetas.map((item) => (
-          <div class="border-2 border-blue-500 rounded-2xl p-6 hover:shadow-lg transition-shadow h-full flex flex-col bg-white">
-            <h3 class="text-xl font-bold text-blue-600 mb-3">{item.titulo}</h3>
-            <p class="text-gray-700 leading-relaxed text-sm md:text-base">
+      
+      {tarjetas.map((item) => (
+        <article class={`
+          rounded-2xl overflow-hidden shadow-lg flex flex-col h-full
+          transition-transform duration-300 hover:-translate-y-2 hover:shadow-2xl
+          ${item.destacado ? 'bg-blue-600 text-white' : 'bg-white text-gray-700'}
+        `}>
+          
+          <!-- IMAGEN SUPERIOR -->
+          <div class="h-48 overflow-hidden relative">
+            <Image 
+              src={item.imagen} 
+              alt={item.titulo} 
+              width={600} 
+              class="w-full h-full object-cover transition-transform duration-500"
+            />
+          </div>
+
+          <!-- CONTENIDO DE LA TARJETA -->
+          <div class="p-6 flex-1 flex flex-col">
+            <h3 class={`text-xl font-bold mb-4 ${item.destacado ? 'text-white' : 'text-blue-600'}`}>
+              {item.titulo}
+            </h3>
+            
+            <p class="leading-relaxed text-sm md:text-base">
               {item.texto}
             </p>
           </div>
-        ))
-      }
+
+        </article>
+      ))}
+
     </div>
   </div>
 </section>
